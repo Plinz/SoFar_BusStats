@@ -1,4 +1,4 @@
-package connection;
+package rendu;
 
 
 import java.awt.BorderLayout;
@@ -8,8 +8,8 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 
 import javax.swing.JButton;
@@ -21,6 +21,9 @@ import javax.swing.JTable;
 import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.UtilDateModel;
+
+import connection.LegCollection;
+import connection.TimePeriod;
 
 public class Ecran extends JFrame{
 	
@@ -41,8 +44,9 @@ public class Ecran extends JFrame{
 	private JComboBox heuref;
 	private JComboBox heuret;
 	private TimePeriod td;
+	private List<LegCollection> list;
 	
-	public Ecran(ArrayList/*<LegCollection>*/ list){
+	public Ecran(){
 		
 		//Modifier le titre
 			this.setTitle("Analize");
@@ -113,7 +117,7 @@ public class Ecran extends JFrame{
 			       System.out.println("Date : "+selectedDate+"\n"+
 			        					"from : "+hfrom+"\n"+
 			        					"to : "+hto+"\n");
-			       LocalDateTime fromtmp ;
+			       LocalDateTime fromtmp = null;
 			       fromtmp.plusYears(selectedDate.getYear());
 			       fromtmp.plusMonths(selectedDate.getMonth());
 			       fromtmp.plusDays(selectedDate.getDay());
@@ -121,13 +125,13 @@ public class Ecran extends JFrame{
 			       fromtmp.plusMinutes(0);
 			       fromtmp.plusSeconds(0);
 			       
-			       LocalDateTime totmp ;
-			       fromtmp.plusYears(selectedDate.getYear());
-			       fromtmp.plusMonths(selectedDate.getMonth());
-			       fromtmp.plusDays(selectedDate.getDay());
-			       fromtmp.plusHours(hto);
-			       fromtmp.plusMinutes(0);
-			       fromtmp.plusSeconds(0);
+			       LocalDateTime totmp = null ;
+			       totmp.plusYears(selectedDate.getYear());
+			       totmp.plusMonths(selectedDate.getMonth());
+			       totmp.plusDays(selectedDate.getDay());
+			       totmp.plusHours(hto);
+			       totmp.plusMinutes(0);
+			       totmp.plusSeconds(0);
 			       
 			       
 			       td = new TimePeriod(fromtmp,totmp);
@@ -136,10 +140,18 @@ public class Ecran extends JFrame{
 				
 		//table & centre 
 			centre.setLayout(new BorderLayout());
-		    LegCollection[][] donnees = {
-		                {"Johnathan", "Sykes", "pomme","pomm","15","leg","150000"}
-		                
-		    };
+			list = td.getTravelStats();
+		    String[][] donnees ={};
+		    for(int i = 0; i < list.size() ; i++ ){
+		    	donnees[i][0] = list.get(i).getPointA().getName();
+		    	donnees[i][1] = list.get(i).getPointB().getName();
+		    	donnees[i][2] = list.get(i).getPointB().getName();;
+		    	donnees[i][3] = list.get(i).getPointB().getName();
+		    	donnees[i][4] = list.get(i).getPointB().getName();
+		    	donnees[i][5] = list.get(i).getPointB().getName();
+		    	}
+		    
+	
 		    //                  String    String   hashMap      int           TRavelLEgs  Long
 		    String[] entetes = {"PointA","PointB","StopByTime","TravelTime","logedLegs","Distance"};
 		    tableau = new JTable(donnees, entetes);
