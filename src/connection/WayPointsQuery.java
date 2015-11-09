@@ -11,9 +11,6 @@ import java.util.List;
 
 public class WayPointsQuery {
 	
-	/** The name of the table*/
-	private final String tableName = "buspl_waypoints";
-	
 	/**Connection to the DataBase**/
 	private DBConnection base;
 
@@ -36,15 +33,13 @@ public class WayPointsQuery {
 		try {
 			PreparedStatement prep;
 			if (limit != -1){
-				prep = base.getCon().prepareStatement("Select * from ? where busid=? limit ?;");
-				prep.setString(1, this.tableName);
-				prep.setString(2, busid);
-				prep.setInt(3, limit);
+				prep = base.getCon().prepareStatement("Select * from buspl_waypoints where busid=? limit ?;");
+				prep.setString(1, busid);
+				prep.setInt(2, limit);
 			}
 			else{
-				prep = base.getCon().prepareStatement("Select * from ? where busid=?;");
-				prep.setString(1, this.tableName);
-				prep.setString(2, busid);
+				prep = base.getCon().prepareStatement("Select * from buspl_waypoints where busid=?;");
+				prep.setString(1, busid);
 			}
 				
 	
@@ -76,21 +71,18 @@ public class WayPointsQuery {
 		try {
 			PreparedStatement prep;
 			if (limit != -1){
-				prep = base.getCon().prepareStatement("Select * from ? where busid=? and time<? and time>? limit ?;");
-				prep.setString(1, this.tableName);
-				prep.setString(2, busid);
-				prep.setLong(3, end);
-				prep.setLong(4, start);
-				prep.setInt(5, limit);
+				prep = base.getCon().prepareStatement("Select * from buspl_waypoints where busid=? and time<? and time>? limit ?;");
+				prep.setString(1, busid);
+				prep.setLong(2, end);
+				prep.setLong(3, start);
+				prep.setInt(4, limit);
 			}
 			else{
-				prep = base.getCon().prepareStatement("Select * from ? where busid=? and time<? and time>?;");
-				prep.setString(1, this.tableName);
-				prep.setString(2, busid);
-				prep.setLong(3, end);
-				prep.setLong(4, start);
+				prep = base.getCon().prepareStatement("Select * from buspl_waypoints where busid=? and time<? and time>?;");
+				prep.setString(1, busid);
+				prep.setLong(2, end);
+				prep.setLong(3, start);
 			}
-				
 	
 			ResultSet rs = prep.executeQuery();;
 			while (rs.next()) {
@@ -104,16 +96,6 @@ public class WayPointsQuery {
 		}
 	}
 	
-	
-
-	public static void main(String[] args) {
-		WayPointsQuery query = new WayPointsQuery();
-		ArrayList<WayPoint> points = query.getWayPointsBybusid("ZYH2923", 10);
-		for (int i=0; i<points.size(); i++){
-			System.out.println(points.get(i).toString());
-		}
-	}
-
 	@SuppressWarnings("finally")
 	public ArrayList<WayPoint> getWayPointsByDate(LocalDateTime from, LocalDateTime to, int limit) {
 		long start = from.toEpochSecond(ZoneOffset.ofHours(2));
@@ -123,20 +105,16 @@ public class WayPointsQuery {
 		try {
 			PreparedStatement prep;
 			if (limit != -1){
-				prep = base.getCon().prepareStatement("Select * from ? where time<? and time>? limit ?;");
-				prep.setString(1, this.tableName);
-				prep.setLong(2, end);
-				prep.setLong(3, start);
-				prep.setInt(4, limit);
+				prep = base.getCon().prepareStatement("Select * from buspl_waypoints where time<? and time>? limit ?;");
+				prep.setLong(1, end);
+				prep.setLong(2, start);
+				prep.setInt(3, limit);
 			}
 			else{
-				prep = base.getCon().prepareStatement("Select * from ? where time<? and time>?;");
-				prep.setString(1, this.tableName);
-				prep.setLong(2, end);
-				prep.setLong(3, start);
+				prep = base.getCon().prepareStatement("Select * from buspl_waypoints where time<? and time>?;");
+				prep.setLong(1, end);
+				prep.setLong(2, start);
 			}
-				
-	
 			ResultSet rs = prep.executeQuery();;
 			while (rs.next()) {
 				wayPoints.add(new WayPoint(rs.getInt(1), rs.getFloat(2), rs.getFloat(3), rs.getString(4), rs.getInt(5), rs.getFloat(6), rs.getFloat(7), rs.getString(8), rs.getString(9), rs.getFloat(10), rs.getFloat(11)));
@@ -158,11 +136,9 @@ public class WayPointsQuery {
 		try {
 			PreparedStatement prep;
 			
-			prep = base.getCon().prepareStatement("Select distinct busid from ? where time<? and time>?;");
-			prep.setString(1, this.tableName);
-			prep.setLong(2, end);
-			prep.setLong(3, start);
-	
+			prep = base.getCon().prepareStatement("Select distinct busid from buspl_waypoints where time<? and time>?;");
+			prep.setLong(1, end);
+			prep.setLong(2, start);
 			ResultSet rs = prep.executeQuery();;
 			while (rs.next()) {
 				busId.add(rs.getString(1));
@@ -183,22 +159,19 @@ public class WayPointsQuery {
 		try {
 			PreparedStatement prep;
 			if (limit != -1){
-				prep = base.getCon().prepareStatement("Select * from ? where busid=? and time<? and time>? limit ?;");
-				prep.setString(1, this.tableName);
-				prep.setString(2, busid);
-				prep.setLong(3, end);
-				prep.setLong(4, start);
-				prep.setInt(5, limit);
+				prep = base.getCon().prepareStatement("Select * from buspl_waypoints where busid=? and time<? and time>? limit ?;");
+				prep.setString(1, busid);
+				prep.setLong(2, end);
+				prep.setLong(3, start);
+				prep.setInt(4, limit);
 			}
 			else{
-				prep = base.getCon().prepareStatement("Select * from ? where busid=? and time<? and time>?;");
-				prep.setString(1, this.tableName);
-				prep.setString(2, busid);
-				prep.setLong(3, end);
-				prep.setLong(4, start);
+				prep = base.getCon().prepareStatement("Select * from buspl_waypoints where busid=? and time<? and time>?;");
+				prep.setString(1, busid);
+				prep.setLong(2, end);
+				prep.setLong(3, start);
 			}
 				
-	
 			ResultSet rs = prep.executeQuery();;
 			while (rs.next()) {
 				wayPoints.add(new WayPoint(rs.getInt(1), rs.getFloat(2), rs.getFloat(3), rs.getString(4), rs.getInt(5), rs.getFloat(6), rs.getFloat(7), rs.getString(8), rs.getString(9), rs.getFloat(10), rs.getFloat(11)));
@@ -209,6 +182,10 @@ public class WayPointsQuery {
 		} finally{
 			return wayPoints;
 		}
-
 	}
+
+	public void close(){
+		this.base.closeConnection();
+	}
+	
 }

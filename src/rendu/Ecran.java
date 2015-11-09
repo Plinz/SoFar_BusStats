@@ -8,7 +8,9 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -18,6 +20,8 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableModel;
 
 import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.JDatePickerImpl;
@@ -71,18 +75,13 @@ public class Ecran extends JFrame{
 			model = new UtilDateModel();
 			model.setDate(2015, 10, 5);
 			model.setSelected(true);
-			//poperties for JDatePanelImpl
-				p = new Properties();
-				p.put("text.today", "Today");
-				p.put("text.month", "Month");
-				p.put("text.year", "Year");
+		//poperties for JDatePanelImpl
+			p = new Properties();
+			p.put("text.today", "Today");
+			p.put("text.month", "Month");
+			p.put("text.year", "Year");
 			datePanel = new JDatePanelImpl(model, p);
 			datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
-			 
-			Date selectedDate = (Date) datePicker.getModel().getValue();
-		
-		
-			
 			
 		//Panel nord
 			nord.setSize(900,100);
@@ -110,61 +109,49 @@ public class Ecran extends JFrame{
 			         hto = Integer.parseInt(tmp2);
 			    }
 			});
-		
-		// search
-			go.addActionListener(new ActionListener()
-			{
-			    public void actionPerformed(ActionEvent e)
-			    {
-			       System.out.println("Date : "+selectedDate+"\n"+
-			        					"from : "+hfrom+"\n"+
-			        					"to : "+hto+"\n");
-			       LocalDateTime fromtmp = null;
-			       fromtmp.plusYears(selectedDate.getYear());
-			       fromtmp.plusMonths(selectedDate.getMonth());
-			       fromtmp.plusDays(selectedDate.getDay());
-			       fromtmp.plusHours(hfrom);
-			       fromtmp.plusMinutes(0);
-			       fromtmp.plusSeconds(0);
-			       
-			       LocalDateTime totmp = null ;
-			       totmp.plusYears(selectedDate.getYear());
-			       totmp.plusMonths(selectedDate.getMonth());
-			       totmp.plusDays(selectedDate.getDay());
-			       totmp.plusHours(hto);
-			       totmp.plusMinutes(0);
-			       totmp.plusSeconds(0);
-			       
-			       
-			       td = new TimePeriod(fromtmp,totmp);
-			    }
-			});;
 				
 		//table & centre 
 			centre.setLayout(new BorderLayout());
-			list = td.getTravelStats();
-		    String[][] donnees ={};
-		    for(int i = 0; i < list.size() ; i++ ){
-		    	donnees[i][0] = list.get(i).getPointA().getName();
-		    	donnees[i][1] = list.get(i).getPointB().getName();
-		    	donnees[i][2] = list.get(i).getAvgStopsByTime().get(Duration.ofMinutes(1))+"";
-		    	donnees[i][3] = list.get(i).getAvgStopsByTime().get(Duration.ofMinutes(5))+"";
-		    	donnees[i][4] = list.get(i).getAvgStopsByTime().get(Duration.ofMinutes(10))+"";
-		    	donnees[i][5] = list.get(i).getAvgTravelTime()+"";
-		    	donnees[i][6] = list.get(i).getAvgDistance()+"";
-		    	
-		    	}
-		    
-	
+			String[][] donnees ={};	
 		    //                  String    String   hashMap      int           TRavelLEgs  Long
 		    String[] entetes = {"PointA","PointB","Stop 1-5","Stop 5-10","Stop > 10 ","TravelTime","Distance"};
-		    tableau = new JTable(donnees, entetes);
+		    TableDonnee tablemodel = new TableDonnee(donnees,entetes);
+		    tableau = new JTable(tablemodel);
 		    centre.add(tableau.getTableHeader(), BorderLayout.NORTH);
 		    centre.add(tableau, BorderLayout.CENTER);
 		    centre.setSize(500,500);
 			centre.setBackground(Color.BLACK);
 			centre.setVisible(true);
-		
+
+			// search
+			go.addActionListener(new ActionListener()
+			{
+			    public void actionPerformed(ActionEvent e)
+			    {
+			    	LocalDate selectedDate = ((Date)datePicker.getModel().getValue()).toInstant().atZone(ZoneId.of("Europe/Athens")).toLocalDate();
+			       System.out.println("Date : "+selectedDate+"\n"+
+			        					"from : "+hfrom+"\n"+
+			        					"to : "+hto+"\n");
+			       LocalDateTime fromtmp = selectedDate.atStartOfDay().plusHours(hfrom);
+			       LocalDateTime totmp = selectedDate.atStartOfDay().plusHours(hto);
+			       td = new TimePeriod(fromtmp,totmp);
+			       list = td.getTravelStats();
+			       String[][] donnees = new String[0][7];
+			       String[] rowData = new String[7];
+			       tablemodel.setDataVector(donnees, entetes);
+				   for(int i = 0; i < list.size() ; i++ ){
+				    	rowData[0] = list.get(i).getPointA().getName();
+				    	rowData[1] = list.get(i).getPointB().getName();
+				    	rowData[2] = list.get(i).getAvgStopsByTime().get(Duration.ofMinutes(1))+"";
+				    	rowData[3] = list.get(i).getAvgStopsByTime().get(Duration.ofMinutes(5))+"";
+				    	rowData[4] = list.get(i).getAvgStopsByTime().get(Duration.ofMinutes(10))+"";
+				    	Duration tmp =list.get(i).getAvgTravelTime();
+				    	rowData[5] = ""+(int)tmp.toHours()+"h "+(int)tmp.toMinutes()%60+"m "+(int)tmp.toMinutes()%60+"s";
+				    	rowData[6] = ((int)list.get(i).getAvgDistance())+" meters";
+				    	tablemodel.addRow(rowData);
+				    }
+			    }
+			});;
 		
 		//corps
 			this.setLayout(new BorderLayout());
@@ -181,6 +168,24 @@ public class Ecran extends JFrame{
 			this.setLocation(50, 50);
 			//this.pack();
 		
+	}
+	
+	class TableDonnee extends DefaultTableModel{
+		private String[][] donnee;
+		private String[] title;
+		
+		public TableDonnee(String[][] donnee, String[] title){
+			this.donnee=donnee;
+			this.title=title;
+		}
+		
+		public String getColumnName(int col) {
+			return this.title[col];
+		}
+		
+	    public int getColumnCount() {
+	    	return this.title.length;
+	    }          
 	}
 	
 	/*//tracer une ligne

@@ -59,6 +59,16 @@ public class DBConnection {
 		}
 	}
 
+	public void closeConnection(){
+		if (this.con!=null){
+			try {
+				this.con.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
 
 	/**
 	 * Run a SQL command which does not return a recordset:

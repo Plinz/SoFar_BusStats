@@ -11,77 +11,134 @@ public class TimePeriod {
 	private LocalDateTime to;
 	private double distanceMax;
 	private List<LegCollection> travelStats;
+	List<BusLocation> busPoints;
 	
 	public TimePeriod(){
 		this.from = LocalDateTime.now().minusDays(1);
 		this.to = LocalDateTime.now();
 		this.travelStats = new ArrayList<LegCollection>();
+		BusLocationsQuery queryLB = new BusLocationsQuery();
+		this.busPoints = queryLB.getAllBusLocation();
+		queryLB.close();
 		this.process();
 	}
 	public TimePeriod(LocalDateTime from, LocalDateTime to){
 		this.from = from;
 		this.to = to;
 		this.travelStats = new ArrayList<LegCollection>();
+		BusLocationsQuery queryLB = new BusLocationsQuery();
+		this.busPoints = queryLB.getAllBusLocation();
+		queryLB.close();
 		this.process();
 	}
 	public TimePeriod(String from, String to){
 		this.from = LocalDateTime.parse(from);
 		this.to= LocalDateTime.parse(to);
 		this.travelStats = new ArrayList<LegCollection>();
+		BusLocationsQuery queryLB = new BusLocationsQuery();
+		this.busPoints = queryLB.getAllBusLocation();
+		queryLB.close();
 		this.process();
 	}
 	public TimePeriod(int yFrom, int moFrom, int dFrom, int hFrom, int yTo, int moTo, int dTo, int hTo){
 		this.from = LocalDateTime.of(yFrom, moFrom, dFrom, hFrom, 0);
 		this.to = LocalDateTime.of(yTo, moTo, dTo, hTo, 0);
 		this.travelStats = new ArrayList<LegCollection>();
+		BusLocationsQuery queryLB = new BusLocationsQuery();
+		this.busPoints = queryLB.getAllBusLocation();
+		queryLB.close();
 		this.process();
 	}
 	
+	private BusLocation closeTo (WayPoint wp){
+		for (int i=0; i<this.busPoints.size(); i++){
+			if (this.busPoints.get(i).calculateDistance(wp)<this.distanceMax)
+				return this.busPoints.get(i);
+		}
+		return null;
+	}
+	
 	private void process(){
-		List<BusLocation> busPoints = (new BusLocationsQuery()).getAllBusLocation();
-		List<String> busId = (new WayPointsQuery()).getBusIdByDate(this.from, this.to);
-		this.distanceMax = 500.0;
+		WayPointsQuery queryWP = new WayPointsQuery();
+		List<String> busId = queryWP.getBusIdByDate(this.from, this.to);
+
+		this.distanceMax = 100.0;
 		HashMap<Duration, Integer> statStop = new HashMap<Duration, Integer>();
 		statStop.put(Duration.ofMinutes(1), 0);
 		statStop.put(Duration.ofMinutes(5), 0);
 		statStop.put(Duration.ofMinutes(10), 0);
+		System.out.println("debut");
 		for (String id : busId){
-			List<WayPoint> wayPoints = (new WayPointsQuery()).getWayPointsByDate(id, this.from, this.to, -1);
+			List<WayPoint> wayPoints = queryWP.getWayPointsByDate(id, this.from, this.to, -1);
+			
+			ArrayList<TravelLeg> legs = new ArrayList<TravelLeg>();
+			
+			int k=0;
+			WayPoint wp = wayPoints.get(k);
+			boolean depart =true;
+			BusLocation blStart = null;
+			System.out.println("before while");
+			while (depart){
+				System.out.println("while depart");
+				System.out.println("while k="+k+" size="+wayPoints.size());
+				while (k<wayPoints.size() && wp.getSpeed()>2){
+					k++;
+					wp = wayPoints.get(k);
+				}
+				if ((blStart = this.closeTo(wp))!=null || k>=wayPoints.size()){
+					depart=false;
+				}
+				else{
+					k++;
+				}
+			}
+			int indexStart = k;
 			int indexStopStart = -1;
 			int indexStopEnd = -1;
 			
-			BusLocation blStart = null;
-			WayPoint wpStart = null;
-			boolean close = false;
-			ArrayList<TravelLeg> legs = new ArrayList<TravelLeg>();
-			for (int i=0; i<wayPoints.size(); i++){
-				WayPoint wp = wayPoints.get(i);
+			BusLocation blEnd = blStart;
+			System.out.println("init done");
+			for (int i=k+1; i<wayPoints.size(); i++){
+				wp = wayPoints.get(i);
 				if (wp.getSpeed()<=2){
-					for (int j=0; j<busPoints.size(); j++){
-						BusLocation bl = busPoints.get(j);
-						double dist = bl.calculateDistance(wp);
-						if (dist < this.distanceMax && blStart != null && !close){
-							close = true;
-							legs.add(new TravelLeg(blStart, bl, wpStart.getLocalDateTime(), wp.getLocalDateTime(), statStop));
-							statStop.forEach((dur, stat) ->{ stat=0; });
-							blStart = bl;
-							wpStart = wp;
+					if ((blEnd = this.closeTo(wp))!=null){
+						if (!blEnd.getCode().equals(blStart.getCode())){
+							HashMap<Duration, Integer> map = new HashMap<Duration, Integer>();
+							map.put(Duration.ofMinutes(1), statStop.get(Duration.ofMinutes(1)));
+							map.put(Duration.ofMinutes(5), statStop.get(Duration.ofMinutes(5)));
+							map.put(Duration.ofMinutes(10), statStop.get(Duration.ofMinutes(10)));
+							legs.add(new TravelLeg(blStart, blEnd, wayPoints.get(indexStart).getLocalDateTime(), wayPoints.get(i).getLocalDateTime(), map));
+							statStop.put(Duration.ofMinutes(1), 0);
+							statStop.put(Duration.ofMinutes(5), 0);
+							statStop.put(Duration.ofMinutes(10), 0);
+							blStart = blEnd;
+							indexStart = i;
+							indexStopStart = -1;
+							indexStopEnd = -1;
 						}
-						else if(close){
-							if(dist>this.distanceMax || (dist < this.distanceMax && bl!=blStart))
-								close = false;
+						else{
+							indexStart = i;
 						}
 					}
-					if (!close){
-						if (i == indexStopEnd+1)
+					else{
+						if (indexStopStart == -1){
+							indexStopStart = i;
+							indexStopEnd = i;
+						}
+						else if (i == indexStopEnd+1)
 							indexStopEnd++;
-						else{
+						else {
 							int duration = wayPoints.get(indexStopEnd).getTime() - wayPoints.get(indexStopStart).getTime();
 							if (duration < 60){}
 							else if (duration < 300)
-								statStop.put(Duration.ofMinutes(5), (statStop.get(Duration.ofMinutes(5))+1));
+								statStop.put(Duration.ofMinutes(1), (statStop.get(Duration.ofMinutes(5))+1));
 							else if (duration < 600)
-								statStop.put(Duration.ofMinutes(5), (statStop.get(Duration.ofMinutes(5))+1));
+								statStop.put(Duration.ofMinutes(5), (statStop.get(Duration.ofMinutes(10))+1));
+							else{
+								statStop.put(Duration.ofMinutes(10), (statStop.get(Duration.ofMinutes(10))+1));
+							}
+							indexStopStart = -1;
+							indexStopEnd = -1;
 						}
 					}
 				}
@@ -92,13 +149,17 @@ public class TimePeriod {
 					if (tl.getPointA().getCode().equals(lc.getPointA().getCode()) && tl.getPointB().getCode().equals(lc.getPointB().getCode())){
 						exist = true;
 						lc.add(tl);
+						System.out.println("change travel already existing");
 					}
 				}
 				if (!exist){
+					System.out.println("new travel");
 					this.travelStats.add(new LegCollection(tl));
 				}
 			}
+			System.out.println("finish");
 		}
+		queryWP.close();
 	}
 
 	

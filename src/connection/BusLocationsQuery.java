@@ -6,8 +6,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class BusLocationsQuery {
-	/** The name of the table*/
-	private final String tableName = "buspl_locations";
 	
 	/**Connection to the DataBase**/
 	private DBConnection base;
@@ -28,8 +26,7 @@ public class BusLocationsQuery {
 	public ArrayList<BusLocation> getAllBusLocation() {
 		ArrayList<BusLocation> busLocations = new ArrayList<BusLocation>();
 		try {
-			PreparedStatement prep = this.base.getCon().prepareStatement("Select * from ?");
-			prep.setString(1, this.tableName);
+			PreparedStatement prep = this.base.getCon().prepareStatement("Select * from buspl_locations");
 			ResultSet rs = prep.executeQuery();
 			while (rs.next()) {
 				busLocations.add(new BusLocation(rs.getString(2), rs.getString(3), rs.getDouble(4), rs.getDouble(5)));
@@ -51,9 +48,8 @@ public class BusLocationsQuery {
 	 */
 	public BusLocation getBusLocationByName(String name) {
 		try {
-			PreparedStatement prep = this.base.getCon().prepareStatement("Select * from ? where name=?;");
-			prep.setString(1, this.tableName);
-			prep.setString(2, name);
+			PreparedStatement prep = this.base.getCon().prepareStatement("Select * from buspl_locations where name=?;");
+			prep.setString(1, name);
 			ResultSet rs = prep.executeQuery();
 			while (rs.next()) {
 				return (new BusLocation(rs.getString(2), rs.getString(3), rs.getDouble(4), rs.getDouble(5)));
@@ -74,9 +70,8 @@ public class BusLocationsQuery {
 	 */
 	public BusLocation getBusLocationByCode(String code) {
 		try {
-			PreparedStatement prep = this.base.getCon().prepareStatement("Select * from ? where code=?;");
-			prep.setString(1, this.tableName);
-			prep.setString(2, code);
+			PreparedStatement prep = this.base.getCon().prepareStatement("Select * from buspl_locations where code=?;");
+			prep.setString(1, code);
 			ResultSet rs = prep.executeQuery();
 			while (rs.next()) {
 				return (new BusLocation(rs.getString(2), rs.getString(3), rs.getDouble(4), rs.getDouble(5)));
@@ -88,4 +83,7 @@ public class BusLocationsQuery {
 		return null;
 	}
 
+	public void close(){
+		this.base.closeConnection();
+	}
 }
