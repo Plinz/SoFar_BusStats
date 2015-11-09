@@ -7,6 +7,7 @@ import java.awt.Container;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
@@ -31,8 +32,6 @@ public class Ecran extends JFrame{
 	private JButton go;
 	private JPanel nord;
 	private JPanel centre;
-	//private JTextField ftime;
-	//private JTextField ttime;
 	private int hfrom;
 	private int hto;
 	private UtilDateModel model;
@@ -63,6 +62,9 @@ public class Ecran extends JFrame{
 			//ttime = new JTextField("To time");
 			heuref = new JComboBox<String>(heures);
 			heuret = new JComboBox<String>(heures);
+			LocalDateTime a = LocalDateTime.of(2016, 1, 1, 8, 5);
+			LocalDateTime b = LocalDateTime.of(2016, 1, 1, 22, 0);
+				td = new TimePeriod(a,b);
 			
 			
 		//JdatePicker
@@ -145,15 +147,17 @@ public class Ecran extends JFrame{
 		    for(int i = 0; i < list.size() ; i++ ){
 		    	donnees[i][0] = list.get(i).getPointA().getName();
 		    	donnees[i][1] = list.get(i).getPointB().getName();
-		    	donnees[i][2] = list.get(i).getPointB().getName();;
-		    	donnees[i][3] = list.get(i).getPointB().getName();
-		    	donnees[i][4] = list.get(i).getPointB().getName();
-		    	donnees[i][5] = list.get(i).getPointB().getName();
+		    	donnees[i][2] = list.get(i).getAvgStopsByTime().get(Duration.ofMinutes(1))+"";
+		    	donnees[i][3] = list.get(i).getAvgStopsByTime().get(Duration.ofMinutes(5))+"";
+		    	donnees[i][4] = list.get(i).getAvgStopsByTime().get(Duration.ofMinutes(10))+"";
+		    	donnees[i][5] = list.get(i).getAvgTravelTime()+"";
+		    	donnees[i][6] = list.get(i).getAvgDistance()+"";
+		    	
 		    	}
 		    
 	
 		    //                  String    String   hashMap      int           TRavelLEgs  Long
-		    String[] entetes = {"PointA","PointB","StopByTime","TravelTime","logedLegs","Distance"};
+		    String[] entetes = {"PointA","PointB","Stop 1-5","Stop 5-10","Stop > 10 ","TravelTime","Distance"};
 		    tableau = new JTable(donnees, entetes);
 		    centre.add(tableau.getTableHeader(), BorderLayout.NORTH);
 		    centre.add(tableau, BorderLayout.CENTER);
