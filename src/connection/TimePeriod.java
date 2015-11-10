@@ -73,7 +73,7 @@ public class TimePeriod {
 			List<WayPoint> wayPoints = queryWP.getWayPointsByDate(id, this.from, this.to, -1);
 			ArrayList<TravelLeg> legs = new ArrayList<TravelLeg>();
 			int k=0;
-			WayPoint wp = wayPoints.get(k);
+			WayPoint wp = wayPoints.get(0);
 			boolean depart =true;
 			BusLocation blStart = null;
 			List<BusLocation> listBL;
@@ -111,7 +111,7 @@ public class TimePeriod {
 							if ((int)listBL.get(p).calculateDistance(wp)<(int)listBL.get(index).calculateDistance(wp))
 								index = p;;
 						}
-						blEnd = listBL.get(index);
+						blEnd = listBL.get(index);	
 						if (!blEnd.getCode().equals(blStart.getCode())){
 							HashMap<Duration, Integer> map = new HashMap<Duration, Integer>();
 							map.put(Duration.ofMinutes(1), statStop.get(Duration.ofMinutes(1)));

@@ -60,24 +60,22 @@ public class LegCollection {
 		this.logedLegs = logedLegs;
 	}
 	public void add(TravelLeg tl) {
-		Duration tmpTravelTime = tl.getTravelTime();
-		int tmpDistance = tl.getDistance();
-		HashMap<Duration, Integer> tmpStopsByTime = tl.getStopsByTime();
-		for (TravelLeg tmpTL : logedLegs){
-			tmpTravelTime.plus(tmpTL.getTravelTime());
-			tmpDistance+=tmpTL.getDistance();
-			tmpStopsByTime.put(Duration.ofMinutes(1), tmpStopsByTime.get(Duration.ofMinutes(1))+tmpTL.getStopsByTime().get(Duration.ofMinutes(1)));
-			tmpStopsByTime.put(Duration.ofMinutes(5), tmpStopsByTime.get(Duration.ofMinutes(5))+tmpTL.getStopsByTime().get(Duration.ofMinutes(5)));
-			tmpStopsByTime.put(Duration.ofMinutes(10), tmpStopsByTime.get(Duration.ofMinutes(10))+tmpTL.getStopsByTime().get(Duration.ofMinutes(10)));
+		if (tl.getDistance()>(this.avgDistance/2) && tl.getDistance()<(this.avgDistance*2) && tl.getTravelTime().getSeconds()>(this.avgTravelTime.getSeconds()/2) && tl.getTravelTime().getSeconds()<(this.avgTravelTime.getSeconds()*2)){
+			Duration tmpTravelTime = tl.getTravelTime();
+			int tmpDistance = tl.getDistance();
+			HashMap<Duration, Integer> tmpStopsByTime = tl.getStopsByTime();
+			for (TravelLeg tmpTL : logedLegs){
+				tmpTravelTime.plus(tmpTL.getTravelTime());
+				tmpDistance+=tmpTL.getDistance();
+				tmpStopsByTime.put(Duration.ofMinutes(1), tmpStopsByTime.get(Duration.ofMinutes(1))+tmpTL.getStopsByTime().get(Duration.ofMinutes(1)));
+				tmpStopsByTime.put(Duration.ofMinutes(5), tmpStopsByTime.get(Duration.ofMinutes(5))+tmpTL.getStopsByTime().get(Duration.ofMinutes(5)));
+				tmpStopsByTime.put(Duration.ofMinutes(10), tmpStopsByTime.get(Duration.ofMinutes(10))+tmpTL.getStopsByTime().get(Duration.ofMinutes(10)));
+			}
+			this.avgTravelTime = tmpTravelTime.dividedBy(this.logedLegs.size());
+			this.avgDistance = tmpDistance/this.logedLegs.size();
+			tmpStopsByTime.put(Duration.ofMinutes(1), tmpStopsByTime.get(Duration.ofMinutes(1))/this.logedLegs.size());
+			tmpStopsByTime.put(Duration.ofMinutes(5), tmpStopsByTime.get(Duration.ofMinutes(5))/this.logedLegs.size());
+			tmpStopsByTime.put(Duration.ofMinutes(10), tmpStopsByTime.get(Duration.ofMinutes(10))/this.logedLegs.size());
 		}
-		this.avgTravelTime = tmpTravelTime.dividedBy(this.logedLegs.size());
-		this.avgDistance = tmpDistance/this.logedLegs.size();
-		tmpStopsByTime.put(Duration.ofMinutes(1), tmpStopsByTime.get(Duration.ofMinutes(1))/this.logedLegs.size());
-		tmpStopsByTime.put(Duration.ofMinutes(5), tmpStopsByTime.get(Duration.ofMinutes(5))/this.logedLegs.size());
-		tmpStopsByTime.put(Duration.ofMinutes(10), tmpStopsByTime.get(Duration.ofMinutes(10))/this.logedLegs.size());
 	}
-	
-	
-	
-
 }
