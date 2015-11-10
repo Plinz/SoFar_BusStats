@@ -10,14 +10,15 @@ public class Exporter  {
         FileWriter out = new FileWriter(file);
        
         for(int i=0; i < model.getColumnCount(); i++) {
-            out.write(model.getColumnName(i) + "\t");
+        	if (i!=5)
+        		out.write(model.getColumnName(i) + "\t");
         }
         out.write("\n");
         for(int i=0; i< model.getRowCount(); i++) {
             for(int j=0; j < model.getColumnCount(); j++) {
             	if(j == 0){
             		out.write(tag+"\t");
-            	}else{
+            	}else if (j!=5){
             		out.write(model.getValueAt(i,j).toString()+"\t");
             	}
             }
