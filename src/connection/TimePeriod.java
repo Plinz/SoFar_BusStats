@@ -83,17 +83,17 @@ public class TimePeriod {
 					wp = wayPoints.get(k);
 				}
 				if ((listBL = this.closeTo(wp)).size()!=0 || k>=wayPoints.size()){
-					int dist = (int)listBL.get(0).calculateDistance(wp);
+					int index = 0;
 					for (int p=1; p<listBL.size(); p++){
-						if ((int)listBL.get(0).calculateDistance(wp)<dist)
-							dist=(int)listBL.get(0).calculateDistance(wp);
+						if ((int)listBL.get(p).calculateDistance(wp)<(int)listBL.get(index).calculateDistance(wp))
+							index = p;;
 					}
+					blStart = listBL.get(index);
 					depart=false;
 				}
 				else
 					k++;
 			}
-			
 			int indexStart = k;
 			int indexStopStart = -1;
 			int indexStopEnd = -1;
@@ -103,7 +103,13 @@ public class TimePeriod {
 				wp = wayPoints.get(i);
 				distanceleg+=(int)wp.calculateDistance(wayPoints.get(i-1));
 				if (wp.getSpeed()<=2){
-					if ((blEnd = this.closeTo(wp))!=null){
+					if ((listBL = this.closeTo(wp)).size()!=0){
+						int index = 0;
+						for (int p=1; p<listBL.size(); p++){
+							if ((int)listBL.get(p).calculateDistance(wp)<(int)listBL.get(index).calculateDistance(wp))
+								index = p;;
+						}
+						blEnd = listBL.get(index);
 						if (!blEnd.getCode().equals(blStart.getCode())){
 							HashMap<Duration, Integer> map = new HashMap<Duration, Integer>();
 							map.put(Duration.ofMinutes(1), statStop.get(Duration.ofMinutes(1)));
