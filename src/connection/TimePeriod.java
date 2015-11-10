@@ -50,12 +50,13 @@ public class TimePeriod {
 		this.process();
 	}
 	
-	private BusLocation closeTo (WayPoint wp){
+	private List<BusLocation> closeTo (WayPoint wp){
+		List<BusLocation> listBL = new ArrayList<BusLocation>();
 		for (int i=0; i<this.busPoints.size(); i++){
 			if (this.busPoints.get(i).calculateDistance(wp)<this.distanceMax)
-				return this.busPoints.get(i);
+				listBL.add(this.busPoints.get(i));
 		}
-		return null;
+		return listBL;
 	}
 	
 	private void process(){
@@ -75,13 +76,20 @@ public class TimePeriod {
 			WayPoint wp = wayPoints.get(k);
 			boolean depart =true;
 			BusLocation blStart = null;
+			List<BusLocation> listBL;
 			while (depart){
 				while (k<wayPoints.size() && wp.getSpeed()>2){
 					k++;
 					wp = wayPoints.get(k);
 				}
-				if ((blStart = this.closeTo(wp))!=null || k>=wayPoints.size())
+				if ((listBL = this.closeTo(wp)).size()!=0 || k>=wayPoints.size()){
+					int dist = (int)listBL.get(0).calculateDistance(wp);
+					for (int p=1; p<listBL.size(); p++){
+						if ((int)listBL.get(0).calculateDistance(wp)<dist)
+							dist=(int)listBL.get(0).calculateDistance(wp);
+					}
 					depart=false;
+				}
 				else
 					k++;
 			}
