@@ -7,6 +7,8 @@ import java.awt.Container;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -167,6 +169,23 @@ public class Ecran extends JFrame{
 					}
 			    }
 			});;
+			
+			
+			//exporter
+			this.export.addActionListener(new ActionListener()
+			{
+				public void actionPerformed(ActionEvent e)
+				{
+		
+					try {
+						Exporter exp = new Exporter();
+						exp.exportTable(tableau, new File("results.xls"));
+					} catch (IOException ex) {
+						System.out.println(ex.getMessage());
+						ex.printStackTrace();
+					}
+				}
+			});;
 		
 		//corps
 			this.setLayout(new BorderLayout());
@@ -208,10 +227,4 @@ public class Ecran extends JFrame{
 	    }          
 	}
 
-	/*//tracer une ligne
-	 * public void paintcomponent(Graphics g) {
-        super.paintComponents(g);
-        g.drawLine(0, 0, 200, 900);
-        g.setColor(Color.BLACK);
-    }*/
 }
