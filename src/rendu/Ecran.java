@@ -179,7 +179,7 @@ public class Ecran extends JFrame{
 		
 					try {
 						Exporter exp = new Exporter();
-						exp.exportTable(tableau, new File("results.xls"));
+						exp.exportTable(tableau, new File("results.csv"));
 					} catch (IOException ex) {
 						System.out.println(ex.getMessage());
 						ex.printStackTrace();

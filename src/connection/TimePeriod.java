@@ -82,7 +82,7 @@ public class TimePeriod {
 					k++;
 					wp = wayPoints.get(k);
 				}
-				if ((listBL = this.closeTo(wp)).size()!=0 || k>=wayPoints.size()){
+				if ((listBL = this.closeTo(wp)).size()!=0){
 					int index = 0;
 					for (int p=1; p<listBL.size(); p++){
 						if ((int)listBL.get(p).calculateDistance(wp)<(int)listBL.get(index).calculateDistance(wp))
@@ -91,6 +91,8 @@ public class TimePeriod {
 					blStart = listBL.get(index);
 					depart=false;
 				}
+				else if (k>=wayPoints.size())
+					depart=false;
 				else
 					k++;
 			}
