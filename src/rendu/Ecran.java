@@ -48,10 +48,13 @@ public class Ecran extends JFrame{
 	private int hfrom;
 	private int hto;
 	private UtilDateModel model;
+	private UtilDateModel model2;
 	private Properties p;
 	private JTable tableau;
 	private JDatePickerImpl datePicker;
 	private JDatePanelImpl datePanel;
+	private JDatePickerImpl datePicker2;
+	private JDatePanelImpl datePanel2;
 	private final String[] heures= {"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24"};
 	private JComboBox<String> heuref;
 	private JComboBox<String> heuret;
@@ -60,6 +63,8 @@ public class Ecran extends JFrame{
 	private JTextField tag;
 	private JScrollPane scroll;
 	private String tagcsv;
+	private JPanel dateheuref;
+	private JPanel dateheuret;
 	
 	public Ecran(){
 		
@@ -81,11 +86,18 @@ public class Ecran extends JFrame{
 			this.heuret = new JComboBox<String>(heures);
 			this.tag = new JTextField("tag");
 			this.tagcsv = "";
+			this.dateheuref = new JPanel();
+			this.dateheuret = new JPanel();
+			
 			
 		//JdatePicker
 			this.model = new UtilDateModel();
 			this.model.setDate(2015, 10, 5);
 			this.model.setSelected(true);
+			
+			this.model2 = new UtilDateModel();
+			this.model2.setDate(2015, 10, 5);
+			this.model2.setSelected(true);
 			
 		//poperties for JDatePanelImpl
 			this.p = new Properties();
@@ -95,14 +107,26 @@ public class Ecran extends JFrame{
 			this.datePanel = new JDatePanelImpl(model, p);
 			this.datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
 			
+			this.datePanel2 = new JDatePanelImpl(model2, p);
+			this.datePicker2 = new JDatePickerImpl(datePanel2, new DateLabelFormatter());
+			
 		//Panel nord
 			this.nord.setSize(900,100);
 			this.nord.setLayout(new GridLayout(1, 5));
 			this.nordest.setLayout(new GridLayout(1, 2));
 			this.nord.add(tag);
-			this.nord.add(datePicker);
-			this.nord.add(heuref);
-			this.nord.add(heuret);
+			
+			this.dateheuref.setLayout(new GridLayout(1,2));
+			this.dateheuref.add(datePicker);
+			this.dateheuref.add(heuref);
+			this.nord.add(dateheuref);
+			
+			this.dateheuret.setLayout(new GridLayout(1,2));
+			this.dateheuret.add(datePicker2);
+			this.dateheuret.add(heuret);
+			this.nord.add(dateheuret);
+			
+			
 			this.nordest.add(go);
 			this.nordest.add(export);
 			this.nordest.setVisible(true);
@@ -110,8 +134,6 @@ public class Ecran extends JFrame{
 			this.nord.setVisible(true);
 		
 		//Combo box
-			this.heuref.setSelectedItem(6);
-			this.heuret.setSelectedItem(22);
 			this.heuref.addActionListener (new ActionListener () {
 			    @SuppressWarnings("unchecked")
 				public void actionPerformed(ActionEvent e) {
@@ -149,11 +171,14 @@ public class Ecran extends JFrame{
 			    {
 
 			    	LocalDate selectedDate = ((Date)datePicker.getModel().getValue()).toInstant().atZone(ZoneId.of("Europe/Athens")).toLocalDate();
-				    System.out.println("Date : "+selectedDate+"\n"+
+			    	LocalDate selectedDate2 = ((Date)datePicker2.getModel().getValue()).toInstant().atZone(ZoneId.of("Europe/Athens")).toLocalDate();
+				    
+			    	System.out.println("Date : "+selectedDate+"\n"+
 				    					"from : "+hfrom+"\n"+
+				    					"Date : "+selectedDate2+"\n"+
 				    					"to : "+hto+"\n");
 				    LocalDateTime fromtmp = selectedDate.atStartOfDay().plusHours(hfrom);
-				    LocalDateTime totmp = selectedDate.atStartOfDay().plusHours(hto);
+				    LocalDateTime totmp = selectedDate2.atStartOfDay().plusHours(hto);
 				    td = new TimePeriod(fromtmp,totmp);
 				    list = td.getTravelStats();
 				    String[][] donnees = new String[0][8];
