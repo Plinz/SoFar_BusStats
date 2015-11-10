@@ -16,7 +16,7 @@ public class Exporter  {
         for(int i=0; i< model.getRowCount(); i++) {
             for(int j=0; j < model.getColumnCount(); j++) {
             	if(j == 0){
-            		out.write(tag);
+            		out.write(tag+"\t");
             	}else{
             		out.write(model.getValueAt(i,j).toString()+"\t");
             	}

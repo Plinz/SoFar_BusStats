@@ -73,6 +73,7 @@ public class Ecran extends JFrame{
 		//instanciation
 			this.go = new JButton("Search");
 			this.export = new JButton("export csv");
+			this.export.setEnabled(false);
 			this.nord = new JPanel();
 			this.nordest = new JPanel();
 			this.centre = new JPanel();
@@ -169,6 +170,8 @@ public class Ecran extends JFrame{
 					   	rowData[6] = ((int)list.get(i).getAvgDistance())+" meters";
 					   	tablemodel.addRow(rowData);
 					}
+					if (list.size()!=0)
+						export.setEnabled(true);
 			    }
 			});;
 			
