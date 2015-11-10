@@ -61,45 +61,39 @@ public class TimePeriod {
 	private void process(){
 		WayPointsQuery queryWP = new WayPointsQuery();
 		List<String> busId = queryWP.getBusIdByDate(this.from, this.to);
-
-		this.distanceMax = 100.0;
+		int distanceleg;
+		this.distanceMax = 1000.0;
 		HashMap<Duration, Integer> statStop = new HashMap<Duration, Integer>();
 		statStop.put(Duration.ofMinutes(1), 0);
 		statStop.put(Duration.ofMinutes(5), 0);
 		statStop.put(Duration.ofMinutes(10), 0);
-		System.out.println("debut");
+		
 		for (String id : busId){
 			List<WayPoint> wayPoints = queryWP.getWayPointsByDate(id, this.from, this.to, -1);
-			
 			ArrayList<TravelLeg> legs = new ArrayList<TravelLeg>();
-			
 			int k=0;
 			WayPoint wp = wayPoints.get(k);
 			boolean depart =true;
 			BusLocation blStart = null;
-			System.out.println("before while");
 			while (depart){
-				System.out.println("while depart");
-				System.out.println("while k="+k+" size="+wayPoints.size());
 				while (k<wayPoints.size() && wp.getSpeed()>2){
 					k++;
 					wp = wayPoints.get(k);
 				}
-				if ((blStart = this.closeTo(wp))!=null || k>=wayPoints.size()){
+				if ((blStart = this.closeTo(wp))!=null || k>=wayPoints.size())
 					depart=false;
-				}
-				else{
+				else
 					k++;
-				}
 			}
+			
 			int indexStart = k;
 			int indexStopStart = -1;
 			int indexStopEnd = -1;
-			
 			BusLocation blEnd = blStart;
-			System.out.println("init done");
+			distanceleg = 0;
 			for (int i=k+1; i<wayPoints.size(); i++){
 				wp = wayPoints.get(i);
+				distanceleg+=(int)wp.calculateDistance(wayPoints.get(i-1));
 				if (wp.getSpeed()<=2){
 					if ((blEnd = this.closeTo(wp))!=null){
 						if (!blEnd.getCode().equals(blStart.getCode())){
@@ -107,7 +101,7 @@ public class TimePeriod {
 							map.put(Duration.ofMinutes(1), statStop.get(Duration.ofMinutes(1)));
 							map.put(Duration.ofMinutes(5), statStop.get(Duration.ofMinutes(5)));
 							map.put(Duration.ofMinutes(10), statStop.get(Duration.ofMinutes(10)));
-							legs.add(new TravelLeg(blStart, blEnd, wayPoints.get(indexStart).getLocalDateTime(), wayPoints.get(i).getLocalDateTime(), map));
+							legs.add(new TravelLeg(blStart, blEnd, wayPoints.get(indexStart).getLocalDateTime(), wayPoints.get(i).getLocalDateTime(), map, distanceleg));
 							statStop.put(Duration.ofMinutes(1), 0);
 							statStop.put(Duration.ofMinutes(5), 0);
 							statStop.put(Duration.ofMinutes(10), 0);
@@ -115,9 +109,11 @@ public class TimePeriod {
 							indexStart = i;
 							indexStopStart = -1;
 							indexStopEnd = -1;
+							distanceleg = 0;
 						}
 						else{
 							indexStart = i;
+							distanceleg = 0;
 						}
 					}
 					else{
@@ -146,18 +142,15 @@ public class TimePeriod {
 			boolean exist = false;
 			for (TravelLeg tl : legs){
 				for (LegCollection lc : this.travelStats){
-					if (tl.getPointA().getCode().equals(lc.getPointA().getCode()) && tl.getPointB().getCode().equals(lc.getPointB().getCode())){
+					if ((tl.getPointA().getCode().equals(lc.getPointA().getCode()) && tl.getPointB().getCode().equals(lc.getPointB().getCode())) || (tl.getPointA().getCode().equals(lc.getPointB().getCode()) && tl.getPointB().getCode().equals(lc.getPointA().getCode()))){
 						exist = true;
 						lc.add(tl);
-						System.out.println("change travel already existing");
 					}
 				}
 				if (!exist){
-					System.out.println("new travel");
 					this.travelStats.add(new LegCollection(tl));
 				}
 			}
-			System.out.println("finish");
 		}
 		queryWP.close();
 	}

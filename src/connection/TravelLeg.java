@@ -11,15 +11,15 @@ public class TravelLeg {
 	private LocalDateTime end;
 	private Duration travelTime;
 	private HashMap<Duration, Integer> stopsByTime;
-	private double distance;
+	private int distance;
 	
-	public TravelLeg (BusLocation pointA, BusLocation pointB, LocalDateTime start, LocalDateTime end, HashMap<Duration, Integer> stopsByTime){
+	public TravelLeg (BusLocation pointA, BusLocation pointB, LocalDateTime start, LocalDateTime end, HashMap<Duration, Integer> stopsByTime, int distance){
 		this.pointA = pointA;
 		this.pointB = pointB;
 		this.start = start;
 		this.end = end;
 		this.travelTime = Duration.between(start, end);
-		this.distance = this.pointA.calculateDistance(this.pointB);
+		this.distance = distance;
 		this.stopsByTime = stopsByTime;
 	}
 
@@ -71,11 +71,11 @@ public class TravelLeg {
 		this.stopsByTime = stopsByTime;
 	}
 
-	public double getDistance() {
+	public int getDistance() {
 		return distance;
 	}
 
-	public void setDistance(double distance) {
+	public void setDistance(int distance) {
 		this.distance = distance;
 	}
 

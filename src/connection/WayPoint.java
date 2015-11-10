@@ -136,4 +136,18 @@ public class WayPoint {
 	public LocalDateTime getLocalDateTime(){
 		return LocalDateTime.ofEpochSecond(this.time, 0, ZoneOffset.ofHours(2));
 	}
+	
+	public double calculateDistance(WayPoint point){
+		double[] coordDepart = this.getCoord();
+		double[] coordArrival = point.getCoord();
+		double rlat1 = Math.PI * coordDepart[0]/180;
+	    double rlat2 = Math.PI * coordArrival[0]/180;
+	 
+	    double theta = coordDepart[1]-coordArrival[1];
+	    double rtheta = Math.PI * theta/180;
+	 
+	    double dist = Math.sin(rlat1) * Math.sin(rlat2) + Math.cos(rlat1) * Math.cos(rlat2) * Math.cos(rtheta);
+	    double ret = Math.acos(dist) * 180/Math.PI * 60 * 1.1515 * 1.609344 * 1000;
+	    return ret;
+	}
 }

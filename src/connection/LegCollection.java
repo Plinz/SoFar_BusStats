@@ -10,7 +10,7 @@ public class LegCollection {
 	private BusLocation pointB;
 	private Duration avgTravelTime;
 	private HashMap<Duration, Integer> avgStopsByTime;
-	private double avgDistance;
+	private int avgDistance;
 	List<TravelLeg> logedLegs;
 	
 	
@@ -47,10 +47,10 @@ public class LegCollection {
 	public void setAvgStopsByTime(HashMap<Duration, Integer> avgStopsByTime) {
 		this.avgStopsByTime = avgStopsByTime;
 	}
-	public double getAvgDistance() {
+	public int getAvgDistance() {
 		return avgDistance;
 	}
-	public void setAvgDistance(double avgDistance) {
+	public void setAvgDistance(int avgDistance) {
 		this.avgDistance = avgDistance;
 	}
 	public List<TravelLeg> getLogedLegs() {
@@ -61,7 +61,7 @@ public class LegCollection {
 	}
 	public void add(TravelLeg tl) {
 		Duration tmpTravelTime = tl.getTravelTime();
-		double tmpDistance = tl.getDistance();
+		int tmpDistance = tl.getDistance();
 		HashMap<Duration, Integer> tmpStopsByTime = tl.getStopsByTime();
 		for (TravelLeg tmpTL : logedLegs){
 			tmpTravelTime.plus(tmpTL.getTravelTime());
