@@ -59,6 +59,7 @@ public class Ecran extends JFrame{
 	private List<LegCollection> list;
 	private JTextField tag;
 	private JScrollPane scroll;
+	private String tagcsv;
 	
 	public Ecran(){
 		
@@ -78,6 +79,7 @@ public class Ecran extends JFrame{
 			this.heuref = new JComboBox<String>(heures);
 			this.heuret = new JComboBox<String>(heures);
 			this.tag = new JTextField("tag");
+			this.tagcsv = "";
 			
 		//JdatePicker
 			this.model = new UtilDateModel();
@@ -176,10 +178,10 @@ public class Ecran extends JFrame{
 			{
 				public void actionPerformed(ActionEvent e)
 				{
-		
+					tagcsv = tag.getText();
 					try {
 						Exporter exp = new Exporter();
-						exp.exportTable(tableau, new File("results.csv"));
+						exp.exportTable(tableau, new File("results.csv"),tagcsv);
 					} catch (IOException ex) {
 						System.out.println(ex.getMessage());
 						ex.printStackTrace();
