@@ -19,7 +19,9 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
 import org.jdatepicker.impl.JDatePanelImpl;
@@ -37,7 +39,9 @@ public class Ecran extends JFrame{
 	private static final long serialVersionUID = 1L;
 	private Container container;
 	private JButton go;
+	private JButton export;
 	private JPanel nord;
+	private JPanel nordest;
 	private JPanel centre;
 	private int hfrom;
 	private int hto;
@@ -51,6 +55,8 @@ public class Ecran extends JFrame{
 	private JComboBox<String> heuret;
 	private TimePeriod td;
 	private List<LegCollection> list;
+	private JTextField tag;
+	private JScrollPane scroll;
 	
 	public Ecran(){
 		
@@ -59,20 +65,23 @@ public class Ecran extends JFrame{
 		
 		//Taille et Modif
 			this.setSize(900,600);
-			this.setResizable(false);
+			this.setResizable(true);
 		
 		//instanciation
 			this.go = new JButton("Search");
+			this.export = new JButton("export csv");
 			this.nord = new JPanel();
+			this.nordest = new JPanel();
 			this.centre = new JPanel();
-			//ftime = new JTextField("From time");
-			//ttime = new JTextField("To time");
 			this.heuref = new JComboBox<String>(heures);
 			this.heuret = new JComboBox<String>(heures);
+			this.tag = new JTextField("tag");
+			
 		//JdatePicker
 			this.model = new UtilDateModel();
 			this.model.setDate(2015, 10, 5);
 			this.model.setSelected(true);
+			
 		//poperties for JDatePanelImpl
 			this.p = new Properties();
 			this.p.put("text.today", "Today");
@@ -83,11 +92,16 @@ public class Ecran extends JFrame{
 			
 		//Panel nord
 			this.nord.setSize(900,100);
-			this.nord.setLayout(new GridLayout(1, 4));
+			this.nord.setLayout(new GridLayout(1, 5));
+			this.nordest.setLayout(new GridLayout(1, 2));
+			this.nord.add(tag);
 			this.nord.add(datePicker);
 			this.nord.add(heuref);
 			this.nord.add(heuret);
-			this.nord.add(go);
+			this.nordest.add(go);
+			this.nordest.add(export);
+			this.nordest.setVisible(true);
+			this.nord.add(nordest);
 			this.nord.setVisible(true);
 		
 		//Combo box
@@ -158,7 +172,8 @@ public class Ecran extends JFrame{
 			this.setLayout(new BorderLayout());
 			this.container = this.getContentPane();
 			this.container.add(nord,BorderLayout.NORTH);
-			this.container.add(centre,BorderLayout.CENTER);
+			this.scroll = new JScrollPane(centre);
+			this.container.add(scroll,BorderLayout.CENTER);
 		
 		
 		
