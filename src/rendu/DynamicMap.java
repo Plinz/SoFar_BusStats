@@ -1,4 +1,7 @@
 package rendu;
+import javax.swing.JFrame;
+
+
 
 public class DynamicMap extends JFrame {
 		

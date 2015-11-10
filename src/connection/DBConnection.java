@@ -1,11 +1,10 @@
 package connection;
 
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
-
-import com.sun.corba.se.pept.transport.Connection;
 
 /**
  * You will get the following exception if the credentials are wrong:
