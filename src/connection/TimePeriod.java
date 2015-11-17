@@ -11,7 +11,8 @@ public class TimePeriod {
 	private LocalDateTime to;
 	private double distanceMax;
 	private List<LegCollection> travelStats;
-	List<BusLocation> busPoints;
+	private List<BusLocation> busPoints;
+	public List<BusLocation> tmpbuslocation = new ArrayList<BusLocation>();
 	
 	public TimePeriod(){
 		this.from = LocalDateTime.now().minusDays(1);
@@ -50,33 +51,67 @@ public class TimePeriod {
 		this.process();
 	}
 	
-	private List<BusLocation> closeTo (WayPoint wp){
+	private BusLocation closeTo (WayPoint wp){
 		List<BusLocation> listBL = new ArrayList<BusLocation>();
 		for (int i=0; i<this.busPoints.size(); i++){
-			if (this.busPoints.get(i).calculateDistance(wp)<this.distanceMax)
+			if (this.busPoints.get(i).getRange()<3200 && this.busPoints.get(i).calculateDistance(wp)<=(this.busPoints.get(i).getRange()*2))
 				listBL.add(this.busPoints.get(i));
 		}
-		return listBL;
+		if (listBL.size()!=0){
+			BusLocation closest = listBL.get(0);
+			for (int p=0; p<listBL.size(); p++){
+				if ((int)listBL.get(p).calculateDistance(wp)<(int)closest.calculateDistance(wp))
+					closest = listBL.get(p);
+			}
+			return closest;
+		}
+		return null;
 	}
+	
+	/*
+	public void processListPoint(){
+		WayPointsQuery queryWP = new WayPointsQuery();
+		List<String> busId = queryWP.getBusIdByDate(this.from, this.to);
+		
+		List<BusLocation> tmp;
+		this.distanceMax = 1000;
+		boolean exist;
+		for(String id : busId){
+			List<WayPoint> wayPoints = queryWP.getWayPointsByDate(id, this.from, this.to, -1);
+			for (WayPoint wp : wayPoints){
+				tmp = this.closeTo(wp);
+				for (BusLocation bl : tmp){
+					exist = false;
+					for (BusLocation fin : this.tmpbuslocation){
+						if (bl.getName()==fin.getName())
+							exist = true;
+					}
+					if (!exist)
+						this.tmpbuslocation.add(bl);
+				}
+			}
+		}		
+	}*/
 	
 	private void process(){
 		WayPointsQuery queryWP = new WayPointsQuery();
 		List<String> busId = queryWP.getBusIdByDate(this.from, this.to);
-		int distanceleg;
-		this.distanceMax = 1000.0;
+		
 		HashMap<Duration, Integer> statStop = new HashMap<Duration, Integer>();
 		statStop.put(Duration.ofMinutes(1), 0);
 		statStop.put(Duration.ofMinutes(5), 0);
 		statStop.put(Duration.ofMinutes(10), 0);
 		
 		for (String id : busId){
+			// All wayPoints of the bus id
 			List<WayPoint> wayPoints = queryWP.getWayPointsByDate(id, this.from, this.to, -1);
+			
+			// All the legs that the bus take on this periode
 			ArrayList<TravelLeg> legs = new ArrayList<TravelLeg>();
-			int k=0;
-			WayPoint wp = wayPoints.get(0);
-			boolean depart =true;
-			BusLocation blStart = null;
-			List<BusLocation> listBL;
+			
+			// List of bus 
+			;
+			/*
 			while (depart){
 				while (k<wayPoints.size() && wp.getSpeed()>2){
 					k++;
@@ -95,29 +130,41 @@ public class TimePeriod {
 					depart=false;
 				else
 					k++;
-			}
-			int indexStart = k;
+			}*/
+			
+			// Distance of a leg
+			int distanceleg = 0;
+			
+			// List of close bus location;
+			BusLocation blClose = null;
+			
+			// Index for statistics
 			int indexStopStart = -1;
 			int indexStopEnd = -1;
-			BusLocation blEnd = blStart;
-			distanceleg = 0;
-			for (int i=k+1; i<wayPoints.size(); i++){
-				wp = wayPoints.get(i);
-				distanceleg+=(int)wp.calculateDistance(wayPoints.get(i-1));
+			
+			// Index for leg
+			int indexStart = 0;
+			BusLocation blStart = null;
+			BusLocation blEnd = null;
+			boolean continuSignal = true;
+			for (int i=0; i<wayPoints.size(); i++){
+				if (i!=0 && Duration.between(wayPoints.get(i-1).getLocalDateTime(), wayPoints.get(i).getLocalDateTime()).compareTo(Duration.ofMinutes(1))>0)
+					continuSignal = false;
+				WayPoint wp = wayPoints.get(i);
+				if (blStart != null)
+					distanceleg+=(int)wp.calculateDistance(wayPoints.get(i-1));
 				if (wp.getSpeed()<=2){
-					if ((listBL = this.closeTo(wp)).size()!=0){
-						int index = 0;
-						for (int p=1; p<listBL.size(); p++){
-							if ((int)listBL.get(p).calculateDistance(wp)<(int)listBL.get(index).calculateDistance(wp))
-								index = p;;
-						}
-						blEnd = listBL.get(index);	
-						if (!blEnd.getCode().equals(blStart.getCode())){
+					if ((blClose = this.closeTo(wp)) != null){
+						blEnd = blClose;	
+						if (blStart != null && !blEnd.getName().equals(blStart.getName())){
 							HashMap<Duration, Integer> map = new HashMap<Duration, Integer>();
 							map.put(Duration.ofMinutes(1), statStop.get(Duration.ofMinutes(1)));
 							map.put(Duration.ofMinutes(5), statStop.get(Duration.ofMinutes(5)));
 							map.put(Duration.ofMinutes(10), statStop.get(Duration.ofMinutes(10)));
-							legs.add(new TravelLeg(blStart, blEnd, wayPoints.get(indexStart).getLocalDateTime(), wayPoints.get(i).getLocalDateTime(), map, distanceleg));
+							if (continuSignal)
+								legs.add(new TravelLeg(blStart, blEnd, wayPoints.get(indexStart).getLocalDateTime(), wayPoints.get(i).getLocalDateTime(), map, distanceleg));
+							else
+								continuSignal = true;
 							statStop.put(Duration.ofMinutes(1), 0);
 							statStop.put(Duration.ofMinutes(5), 0);
 							statStop.put(Duration.ofMinutes(10), 0);
@@ -126,6 +173,14 @@ public class TimePeriod {
 							indexStopStart = -1;
 							indexStopEnd = -1;
 							distanceleg = 0;
+						}
+						else if (blStart == null){
+							blStart = blClose;
+							indexStart = i;
+							distanceleg = 0;
+							statStop.put(Duration.ofMinutes(1), 0);
+							statStop.put(Duration.ofMinutes(5), 0);
+							statStop.put(Duration.ofMinutes(10), 0);
 						}
 						else{
 							indexStart = i;
@@ -146,11 +201,18 @@ public class TimePeriod {
 								statStop.put(Duration.ofMinutes(1), (statStop.get(Duration.ofMinutes(5))+1));
 							else if (duration < 600)
 								statStop.put(Duration.ofMinutes(5), (statStop.get(Duration.ofMinutes(10))+1));
-							else{
+							else if (duration < 1800){
 								statStop.put(Duration.ofMinutes(10), (statStop.get(Duration.ofMinutes(10))+1));
+							}else{
+								blStart = null;
+								indexStart = -1;
+								distanceleg = 0;
+								statStop.put(Duration.ofMinutes(1), 0);
+								statStop.put(Duration.ofMinutes(5), 0);
+								statStop.put(Duration.ofMinutes(10), 0);
 							}
-							indexStopStart = -1;
-							indexStopEnd = -1;
+							indexStopStart = i;
+							indexStopEnd = i;
 						}
 					}
 				}
@@ -161,14 +223,19 @@ public class TimePeriod {
 					if ((tl.getPointA().getCode().equals(lc.getPointA().getCode()) && tl.getPointB().getCode().equals(lc.getPointB().getCode())) || (tl.getPointA().getCode().equals(lc.getPointB().getCode()) && tl.getPointB().getCode().equals(lc.getPointA().getCode()))){
 						exist = true;
 						lc.add(tl);
+						break;
 					}
 				}
 				if (!exist){
 					this.travelStats.add(new LegCollection(tl));
 				}
+				exist=false;
 			}
 		}
 		queryWP.close();
+		for(LegCollection lc : this.travelStats){
+			lc.statProcess();
+		}
 	}
 
 	

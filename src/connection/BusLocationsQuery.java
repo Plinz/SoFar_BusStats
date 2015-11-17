@@ -29,7 +29,7 @@ public class BusLocationsQuery {
 			PreparedStatement prep = this.base.getCon().prepareStatement("Select * from buspl_locations");
 			ResultSet rs = prep.executeQuery();
 			while (rs.next()) {
-				busLocations.add(new BusLocation(rs.getString(2), rs.getString(3), rs.getDouble(4), rs.getDouble(5)));
+				busLocations.add(new BusLocation(rs.getString(2), rs.getString(3), rs.getDouble(4), rs.getDouble(5), rs.getInt(6)));
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -52,7 +52,7 @@ public class BusLocationsQuery {
 			prep.setString(1, name);
 			ResultSet rs = prep.executeQuery();
 			while (rs.next()) {
-				return (new BusLocation(rs.getString(2), rs.getString(3), rs.getDouble(4), rs.getDouble(5)));
+				return (new BusLocation(rs.getString(2), rs.getString(3), rs.getDouble(4), rs.getDouble(5), rs.getInt(6)));
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -74,7 +74,7 @@ public class BusLocationsQuery {
 			prep.setString(1, code);
 			ResultSet rs = prep.executeQuery();
 			while (rs.next()) {
-				return (new BusLocation(rs.getString(2), rs.getString(3), rs.getDouble(4), rs.getDouble(5)));
+				return (new BusLocation(rs.getString(2), rs.getString(3), rs.getDouble(4), rs.getDouble(5), rs.getInt(6)));
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block

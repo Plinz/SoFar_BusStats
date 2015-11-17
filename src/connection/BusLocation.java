@@ -5,12 +5,14 @@ public class BusLocation {
 	private String code;
 	private double lat;
 	private double lng;
+	private int range;
 	
-	public BusLocation(String name, String code, double lng, double lat){
+	public BusLocation(String name, String code, double lng, double lat, int range){
 		this.name = name;
 		this.code = code;
 		this.lat = lat;
 		this.lng = lng;
+		this.range = range;
 	}
 	
 
@@ -62,9 +64,21 @@ public class BusLocation {
 	}
 
 
-
+	
 	public void setLng(double lng) {
 		this.lng = lng;
+	}
+	
+	
+	
+	public int getRange() {
+		return range;
+	}
+
+
+
+	public void setRange(int range) {
+		this.range = range;
 	}
 	
 	public double calculateDistance(BusLocation stop){
@@ -94,6 +108,5 @@ public class BusLocation {
 	    double ret = Math.acos(dist) * 180/Math.PI * 60 * 1.1515 * 1.609344 * 1000;
 	    return ret;
 	}
-	
 
 }

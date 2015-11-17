@@ -155,7 +155,7 @@ public class Ecran extends JFrame{
 			this.centre.setLayout(new BorderLayout());
 			String[][] donnees ={};	
 		    //                  String    String   hashMap      int           TRavelLEgs  Long
-		    String[] entetes = {"PointA","PointB","Stop 1-5","Stop 5-10","Stop > 10 ","TravelTime","Time in Second","Distance"};
+		    String[] entetes = {"Tag","PointA","PointB","Stop 1-5","Stop 5-10","Stop > 10 ","AvgTime","SqrtTime","AvgDistance","Occurence","MinTime","MaxTime",};
 		    TableDonnee tablemodel = new TableDonnee(donnees,entetes);
 		    this.tableau = new JTable(tablemodel);
 		    this.centre.add(tableau.getTableHeader(), BorderLayout.NORTH);
@@ -181,19 +181,27 @@ public class Ecran extends JFrame{
 				    LocalDateTime totmp = selectedDate2.atStartOfDay().plusHours(hto);
 				    td = new TimePeriod(fromtmp,totmp);
 				    list = td.getTravelStats();
-				    String[][] donnees = new String[0][8];
-				    String[] rowData = new String[8];
+				    String[][] donnees = new String[0][12];
+				    String[] rowData = new String[12];
 				    tablemodel.setDataVector(donnees, entetes);
+				    
 					for(int i = 0; i < list.size() ; i++ ){
-					 	rowData[0] = list.get(i).getPointA().getName();
-					   	rowData[1] = list.get(i).getPointB().getName();
-					   	rowData[2] = list.get(i).getAvgStopsByTime().get(Duration.ofMinutes(1))+"";
-					   	rowData[3] = list.get(i).getAvgStopsByTime().get(Duration.ofMinutes(5))+"";
-					   	rowData[4] = list.get(i).getAvgStopsByTime().get(Duration.ofMinutes(10))+"";
+						rowData[0] = tag.getText();
+					 	rowData[1] = list.get(i).getPointA().getName();
+					   	rowData[2] = list.get(i).getPointB().getName();
+					   	rowData[3] = list.get(i).getAvgStopsByTime().get(Duration.ofMinutes(1))+"";
+					   	rowData[4] = list.get(i).getAvgStopsByTime().get(Duration.ofMinutes(5))+"";
+					   	rowData[5] = list.get(i).getAvgStopsByTime().get(Duration.ofMinutes(10))+"";
 					   	Duration tmp =list.get(i).getAvgTravelTime();
-					   	rowData[5] = ""+(int)tmp.toHours()+"h "+(int)tmp.toMinutes()%60+"m "+(int)tmp.getSeconds()%60+"s";
-					   	rowData[6] = (int)tmp.getSeconds()+"";
-					   	rowData[7] = ((int)list.get(i).getAvgDistance())+"";
+					   	rowData[6] = ""+(int)tmp.toHours()+"h "+(int)tmp.toMinutes()%60+"m "+(int)tmp.getSeconds()%60+"s";
+					   	Duration tmp2 =list.get(i).getSqrtAvgTravelTime();
+					   	rowData[7] = ""+(int)tmp2.toHours()+"h "+(int)tmp2.toMinutes()%60+"m "+(int)tmp2.getSeconds()%60+"s";
+					   	rowData[8] = ((int)list.get(i).getAvgDistance())+"";
+					   	rowData[9] = list.get(i).getLogedLegs().size()+"";
+					   	Duration tmp3 =list.get(i).getMinTravelTime();
+					   	rowData[10] = ""+(int)tmp3.toHours()+"h "+(int)tmp3.toMinutes()%60+"m "+(int)tmp3.getSeconds()%60+"s";
+					   	Duration tmp4 =list.get(i).getMaxTravelTime();
+					   	rowData[11] = ""+(int)tmp4.toHours()+"h "+(int)tmp4.toMinutes()%60+"m "+(int)tmp4.getSeconds()%60+"s";
 					   	tablemodel.addRow(rowData);
 					}
 					if (list.size()!=0)
@@ -210,7 +218,7 @@ public class Ecran extends JFrame{
 					tagcsv = tag.getText();
 					try {
 						Exporter exp = new Exporter();
-						exp.exportTable(tableau, new File("results.csv"),tagcsv);
+						exp.exportTable(tableau, new File(tagcsv+".csv"));
 					} catch (IOException ex) {
 						System.out.println(ex.getMessage());
 						ex.printStackTrace();
