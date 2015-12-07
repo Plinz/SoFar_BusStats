@@ -112,7 +112,7 @@ public class TimePeriod{
 			for (TravelLeg tl : legs) {
 
 				if (lastStop != null
-						&& (Duration.between(lastStop.getEnd(), tl.getStart()).compareTo(Duration.ofMinutes(30)) > 0
+						&& (Duration.between(lastStop.getEnd(), tl.getStart()).compareTo(Duration.ofMinutes(15)) > 0
 								|| lastStop.getPointB().getName().equals(tl.getPointA().getName()))) {
 					trajets.add(currentTrajet);
 					currentTrajet.clear();
@@ -121,10 +121,10 @@ public class TimePeriod{
 				currentTrajet.add(tl);
 
 				for (LegCollection lc : this.travelStats) {
-					if ((tl.getPointA().getCode().equals(lc.getPointA().getCode())
-							&& tl.getPointB().getCode().equals(lc.getPointB().getCode()))
-							|| (tl.getPointA().getCode().equals(lc.getPointB().getCode())
-									&& tl.getPointB().getCode().equals(lc.getPointA().getCode()))) {
+					if ((tl.getPointA().getName().equals(lc.getPointA().getName())
+							&& tl.getPointB().getName().equals(lc.getPointB().getName()))
+							|| (tl.getPointA().getName().equals(lc.getPointB().getName())
+									&& tl.getPointB().getName().equals(lc.getPointA().getName()))) {
 						exist = true;
 						lc.add(tl);
 						break;
@@ -287,8 +287,11 @@ public class TimePeriod{
 	private boolean validation(int distanceleg, Duration duration, boolean continuSignal, BusLocation blStart, BusLocation blEnd){
 		if(continuSignal){
 			if(distanceleg > 1000){
-				if(duration.getSeconds()> 0 && distanceleg/duration.getSeconds() < 34 && distanceleg/duration.getSeconds() > 1.4){
-					int distanceHopper = GraphHopper.getTimeAndDistanceByCoord(blStart.getLat(), blStart.getLng(), blEnd.getLat(), blEnd.getLng())[0];
+				if(duration.getSeconds()> 0 && distanceleg/duration.getSeconds() < 34 && distanceleg/duration.getSeconds() > 0.4){
+					GraphHopperQuery query = new GraphHopperQuery();
+					int distanceHopper = query.selectDistance(blStart, blEnd);
+					query.close();
+					System.out.println("distance hopper"+distanceHopper);
 					if (distanceleg < (0.4*distanceHopper)+distanceHopper && distanceleg > (0.4*distanceHopper)-distanceHopper){
 						return true;
 					}
@@ -372,7 +375,7 @@ public class TimePeriod{
 	}
 	
 	public static void main(String[] args) {
-		BusLocationsQuery query = new BusLocationsQuery();
+		BusLocationsQuery queryLocations = new BusLocationsQuery();
 		StatisticsQuery stat = new StatisticsQuery();
 	    FileWriter out = null;
 		Boolean googleCheck = false;
@@ -397,7 +400,7 @@ public class TimePeriod{
  			// TODO Auto-generated catch block
  			e1.printStackTrace();
  		}
-		ArrayList<BusLocation> bl = query.getAllBusLocation();
+		ArrayList<BusLocation> bl = queryLocations.getAllBusLocation();
 		try{
 			for (int i=0; i<bl.size(); i++){
 				for(int j=i+1; j<bl.size(); j++){
@@ -407,7 +410,9 @@ public class TimePeriod{
 						out.write(lc.getPointB().getName()+";");
 						out.write(lc.getAvgDistance()/1000+";");
 						out.write(lc.getMinTravelTime().getSeconds()/60+";");
-						int[] hopper = GraphHopper.getTimeAndDistanceByCoord(lc.getPointA().getLat(), lc.getPointA().getLng(), lc.getPointB().getLat(), lc.getPointB().getLng());
+						GraphHopperQuery queryHopper = new GraphHopperQuery();
+						int[] hopper = queryHopper.selectDistanceTime(lc.getPointA(), lc.getPointB());
+						queryHopper.close();
 						System.out.println("GraphHopper : d="+hopper[0]+" t="+hopper[1]);
 						out.write(hopper[0]/1000+";");
 						out.write(hopper[1]/60000+";");

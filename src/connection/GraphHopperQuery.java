@@ -3,11 +3,6 @@ package connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Duration;
-import java.time.Month;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 public class GraphHopperQuery {
 	
@@ -23,8 +18,8 @@ public class GraphHopperQuery {
 	
 	public void insert (BusLocation pointA, BusLocation pointB, int distance, int time){
 	    try {
-	    	ResultSet result = this.select(pointA, pointB);
-	    	if(result.last()){
+	    	int result = this.selectDistance(pointA, pointB);
+	    	if(result == -1){
 				PreparedStatement prep = this.base.getCon().prepareStatement("INSERT into buspl_graphhopper values (?, ?, ?, ?);");
 				prep.setString(1, pointA.getName());
 				prep.setString(2, pointB.getName());
@@ -38,17 +33,43 @@ public class GraphHopperQuery {
 			e.printStackTrace();
 		}
 	}
-
 	
-	public ResultSet select (BusLocation pointA, BusLocation pointB){
+	public int selectDistance (BusLocation pointA, BusLocation pointB){
 		try{
 			PreparedStatement prep;
-			prep = base.getCon().prepareStatement("SELECT * FROM buspl_statistics where (POINT_A=? AND POINT_B=?) OR (POINT_B=? AND POINT_A=?);");
+			prep = base.getCon().prepareStatement("SELECT DISTANCE FROM buspl_graphhopper where (POINT_A=? AND POINT_B=?) OR (POINT_B=? AND POINT_A=?);");
 			prep.setString(1, pointA.getName());
 			prep.setString(2, pointB.getName());
-			prep.setString(3, pointB.getName());
-			prep.setString(4, pointA.getName());
-			return prep.executeQuery();
+			prep.setString(3, pointA.getName());
+			prep.setString(4, pointB.getName());
+			ResultSet result = prep.executeQuery();
+			result.next();
+			int dist = result.getInt(1);
+			prep.close();
+			return dist;
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		return -1;
+	}
+
+	public int[] selectDistanceTime(BusLocation pointA, BusLocation pointB) {
+		try{
+			PreparedStatement prep;
+			prep = base.getCon().prepareStatement("SELECT DISTANCE, TIME FROM buspl_graphhopper where (POINT_A=? AND POINT_B=?) OR (POINT_B=? AND POINT_A=?);");
+			prep.setString(1, pointA.getName());
+			prep.setString(2, pointB.getName());
+			prep.setString(3, pointA.getName());
+			prep.setString(4, pointB.getName());
+			ResultSet result = prep.executeQuery();
+			int [] ret = new int [2];
+			while(result.next()){
+				ret[0] = result.getInt(1);
+				ret[1] = result.getInt(2);
+			}
+			prep.close();
+			return ret;
 		}
 		catch(Exception e){
 			e.printStackTrace();
@@ -59,4 +80,5 @@ public class GraphHopperQuery {
 	public void close(){
 		this.base.closeConnection();
 	}
+
 }
