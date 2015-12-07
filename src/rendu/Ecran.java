@@ -8,11 +8,13 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -34,6 +36,8 @@ import org.jdatepicker.impl.UtilDateModel;
 import connection.GestionTimePeriod;
 import connection.LegCollection;
 import connection.StatisticsQuery;
+import google.GeocodeService;
+import google.GraphHopper;
 
 public class Ecran extends JFrame{
 	
@@ -167,10 +171,6 @@ public class Ecran extends JFrame{
 						StatisticsQuery query = new StatisticsQuery();
 						query.insertAll(currentList);
 					}
-					else{
-						StatisticsQuery query = new StatisticsQuery();
-						System.out.println(query.selectMin("AIRPORT", "LAGANAS", 9, 2015));
-					}
 				}
 			});
 			
@@ -197,30 +197,33 @@ public class Ecran extends JFrame{
 				    	currentList = td.statsCutByMonth();
 				    else
 				    	currentList = td.NormalStats();
-				    for(LegCollection lg: currentList)
-				    	lg.setTag(tag.getText());
+
+				    for(LegCollection lc : currentList){
+						lc.statProcess();
+				    	lc.setTag(tag.getText());
+					}
+				    	
 					for(int i = 0; i < currentList.size() ; i++ ){
 						rowData[0] = currentList.get(i).getTag();
 						rowData[1] = currentList.get(i).getMonth();
 						rowData[2] = currentList.get(i).getYear()+"";
-					 	rowData[3] = currentList.get(i).getPointA().getName();
+						rowData[3] = currentList.get(i).getPointA().getName();
 					   	rowData[4] = currentList.get(i).getPointB().getName();
 					   	rowData[5] = currentList.get(i).getAvgStopsByTime().get(Duration.ofMinutes(1))+"";
 					   	rowData[6] = currentList.get(i).getAvgStopsByTime().get(Duration.ofMinutes(5))+"";
 					   	rowData[7] = currentList.get(i).getAvgStopsByTime().get(Duration.ofMinutes(10))+"";
 					   	Duration tmp =currentList.get(i).getAvgTravelTime();
-					   	rowData[8] = ""+(int)tmp.toHours()+"h "+(int)tmp.toMinutes()%60+"m "+(int)tmp.getSeconds()%60+"s";
+					  	rowData[8] = ""+(int)tmp.toHours()+"h "+(int)tmp.toMinutes()%60+"m "+(int)tmp.getSeconds()%60+"s";
 					   	Duration tmp2 = currentList.get(i).getSqrtAvgTravelTime();
 					   	rowData[9] = ""+(int)tmp2.toHours()+"h "+(int)tmp2.toMinutes()%60+"m "+(int)tmp2.getSeconds()%60+"s";
 					   	rowData[10] = ((int)currentList.get(i).getAvgDistance())+"";
 					   	rowData[11] = currentList.get(i).getLogedLegs().size()+"";
 					   	Duration tmp3 = currentList.get(i).getMinTravelTime();
 					   	rowData[12] = ""+(int)tmp3.toHours()+"h "+(int)tmp3.toMinutes()%60+"m "+(int)tmp3.getSeconds()%60+"s";
-					   	Duration tmp4 = currentList.get(i).getMaxTravelTime();
+					  	Duration tmp4 = currentList.get(i).getMaxTravelTime();
 					   	rowData[13] = ""+(int)tmp4.toHours()+"h "+(int)tmp4.toMinutes()%60+"m "+(int)tmp4.getSeconds()%60+"s";
 					   	tablemodel.addRow(rowData);
 					}
-
 					if (tablemodel.getRowCount()!=0){
 						saveBDD.setEnabled(true);
 						export.setEnabled(true);

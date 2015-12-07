@@ -14,8 +14,9 @@ import org.json.JSONObject;
 
 import connection.BusLocation;
 import connection.BusLocationsQuery;
+import connection.GraphHopperQuery;
 
-public class GeocodeService {
+public class GraphHopper {
 
 	/*
 	* Geocode request URL. Here see we are passing "json" it means we will get
@@ -24,7 +25,7 @@ public class GeocodeService {
 	* "http://maps.googleapis.com/maps/api/geocode/xml";
 	*/
 
-	private static final String URLdistance = "http://maps.googleapis.com/maps/api/distancematrix/json";
+	private static final String URLdistance = "http://192.168.1.200:8989/route";
 
 	/*
 	* Here the fullAddress String is in format like
@@ -92,7 +93,7 @@ public class GeocodeService {
 //									// and can save it in POJO.
 //	}
 
-	private static String getJSONDistance(double latX, double lonX, double latY, double lonY) throws UnsupportedEncodingException {
+	private static String getJSONGraphHopper(double latX, double lonX, double latY, double lonY) throws UnsupportedEncodingException {
 
 		/*
 		* Create an java.net.URL object by passing the request URL in
@@ -106,7 +107,7 @@ public class GeocodeService {
 		*/
 		URL url = null;
 		try {
-			url = new URL(URLdistance + "?origins="+latX+","+lonX+"&destinations="+latY+","+lonY+"&sensor=false");
+			url = new URL(URLdistance + "?point="+latX+"%2C"+lonX+"&point="+latY+"%2C"+lonY);
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -147,55 +148,36 @@ public class GeocodeService {
 									// which you can retrieve all key value pair
 									// and can save it in POJO.
 	}
-	
+
 	public static int[] getTimeAndDistanceByCoord(double latX, double lonX, double latY, double lonY) {
-		String distanceFeed = null	;
-		int ret[] = new int [2];
+		String distanceFeed = null;
 		try {
-			distanceFeed = GeocodeService.getJSONDistance(latX,lonX,latY,lonY);
-			JSONObject ja = new JSONObject(distanceFeed);
-			if (ja.get("origin_addresses").equals("[\"Zakinthos, Greece\"]")
-					|| ja.get("destination_addresses").equals(
-							"[\"Zakinthos, Greece\"]")){
-				System.out.println("first if problem");
-				return null;
-			}
-			JSONArray rows = (JSONArray) ja.get("rows");
-			if (rows.length()==0){
-				System.out.println("rows -1");
-				return null;
-			}
-			JSONObject elmnts = (JSONObject) rows.get(0);
-			JSONArray infoArr = (JSONArray) elmnts.get("elements");
-			if (infoArr.length()==0){
-				System.out.println("info arr -1");
-				return null;
-			}
-			
-			JSONObject infoJson = (JSONObject) infoArr.get(0);
-			ret[0] = Integer.parseInt(((JSONObject) infoJson.get("distance")).get("value")
-					.toString());// .toString().replace(" mins",
-								// "").replace(" min", "");
-			ret[1] = Integer.parseInt(((JSONObject) infoJson.get("duration")).get("value")
-					.toString());
-			return ret;
-		} catch (Exception e) {
+			distanceFeed = GraphHopper.getJSONGraphHopper(latX,lonX,latY,lonY);
+		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return null;
-		}		
+		}
+		JSONObject ja = new JSONObject(distanceFeed);
+		JSONArray row = (JSONArray) ja.get("paths");
+		JSONObject ob = (JSONObject) row.get(0);
+		int dist = ob.getInt("distance");
+		int time = ob.getInt("time");
+		return new int[]{dist, time};
 	}
 	
 	public static void main(String[] args) {
 		BusLocationsQuery bus = new BusLocationsQuery();
 		ArrayList<BusLocation> tabBus = bus.getAllBusLocation();
+		GraphHopperQuery query = new GraphHopperQuery();
 		for (int i=0; i<tabBus.size(); i++){
 			BusLocation a = tabBus.get(i);
-			for (int j=i; j<tabBus.size(); j++){
+			for (int j=i+1; j<tabBus.size(); j++){
 				BusLocation z = tabBus.get(j);
-				int result[] = GeocodeService.getTimeAndDistanceByCoord(a.getLat(), a.getLng(), z.getLat(), z.getLng());
-				System.out.println(a.getName()+"\t"+z.getName()+"\t"+result[0]+"\t"+result[1]);
+				int[] result = GraphHopper.getTimeAndDistanceByCoord(a.getLat(), a.getLng(), z.getLat(), z.getLng());
+				query.insert(a, z, result[0], result[1]);
+				System.out.println("ajout "+((i*tabBus.size())+j));
 			}
 		}
+		System.out.println("fin");
 	}
 }

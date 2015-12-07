@@ -5,6 +5,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Month;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class StatisticsQuery {
@@ -17,10 +19,24 @@ public class StatisticsQuery {
 		this.base = new DBConnection("antoine", "sofar", "localhost", 3306, "waypoints");
 	}
 	
+	
+	
 	public void insertAll (List<LegCollection> list){
 	    try {
 	    	for (int i=0; i<list.size(); i++){
 	    		LegCollection l = list.get(i);
+	    		ResultSet result = this.select(l.getTag(), l.getMonth(), l.getYear(), l.getPointA(), l.getPointB());
+	    		if (!result.last()){
+	    			PreparedStatement prep = this.base.getCon().prepareStatement("DELETE FROM buspl_statistics WHERE TAG=? AND MONTH=? AND YEAR=? AND (POINT_A=? AND POINT_B=?) OR (POINT_B=? AND POINT_A=?)");
+	    			prep.setString(1, l.getTag());
+	    			prep.setString(2, l.getMonth());
+	    			prep.setInt(3, l.getYear());
+	    			prep.setString(4, l.getPointA().getName());
+	    			prep.setString(5, l.getPointB().getName());
+	    			prep.setString(6, l.getPointB().getName());
+	    			prep.setString(7, l.getPointA().getName());
+	    			prep.executeUpdate();
+	    		}
 				PreparedStatement prep = this.base.getCon().prepareStatement("insert into buspl_statistics values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 				prep.setString(1, l.getTag());
 				prep.setString(2, l.getMonth());
@@ -46,50 +62,84 @@ public class StatisticsQuery {
 		}
 	}
 	
-	public int selectMin (String PointA, String PointB, int month, int year){
+	public LegCollection selectMin (BusLocation PointA, BusLocation PointB, int month, int year){
 		try {
 			PreparedStatement prep;
 			if (month > 0 && month < 13 && year > 0){
-				prep = this.base.getCon().prepareStatement("Select MIN(MINTIME) from buspl_statistics where (POINT_A=? or POINT_A=?) and (POINT_B=? or POINT_B=?) and MONTH=? and YEAR=?");
-				prep.setString(1, PointA);
-				prep.setString(2, PointB);
-				prep.setString(3, PointA);
-				prep.setString(4, PointB);
+				prep = this.base.getCon().prepareStatement("Select STOP_1_5, STOP_5_10, STOP_10, AVGTIME, SQRTTIME, AVGDISTANCE, OCCUR, MINTIME, MIN(MINTIME), MAXTIME from buspl_statistics where (POINT_A=? and POINT_B=?) or (POINT_A=? and POINT_B=?) and MONTH=? and YEAR=?");
+				prep.setString(1, PointA.getName());
+				prep.setString(2, PointB.getName());
+				prep.setString(3, PointB.getName());
+				prep.setString(4, PointA.getName());
 				prep.setString(5, Month.of(month).toString());
 				prep.setInt(6, year);
 			}else if(year > 0){
-				prep = this.base.getCon().prepareStatement("Select MIN(MINTIME) from buspl_statistics where (POINT_A=? or POINT_A=?) and (POINT_B=? or POINT_B=?) and YEAR=?");
-				prep.setString(1, PointA);
-				prep.setString(2, PointB);
-				prep.setString(3, PointA);
-				prep.setString(4, PointB);
+				prep = this.base.getCon().prepareStatement("Select STOP_1_5, STOP_5_10, STOP_10, AVGTIME, SQRTTIME, AVGDISTANCE, OCCUR, MINTIME, MIN(MINTIME), MAXTIME from buspl_statistics where (POINT_A=? and POINT_B=?) or (POINT_A=? and POINT_B=?) and YEAR=?");
+				prep.setString(1, PointA.getName());
+				prep.setString(2, PointB.getName());
+				prep.setString(3, PointB.getName());
+				prep.setString(4, PointA.getName());
 				prep.setInt(5, year);				
 			}else if(month > 0 && month < 13){
-				prep = this.base.getCon().prepareStatement("Select MIN(MINTIME) from buspl_statistics where (POINT_A=? or POINT_A=?) and (POINT_B=? or POINT_B=?) and MONTH=?");
-				prep.setString(1, PointA);
-				prep.setString(2, PointB);
-				prep.setString(3, PointA);
-				prep.setString(4, PointB);
+				prep = this.base.getCon().prepareStatement("Select STOP_1_5, STOP_5_10, STOP_10, AVGTIME, SQRTTIME, AVGDISTANCE, OCCUR, MINTIME, MIN(MINTIME), MAXTIME from buspl_statistics where (POINT_A=? and POINT_B=?) or (POINT_A=? and POINT_B=?) and MONTH=?");
+				prep.setString(1, PointA.getName());
+				prep.setString(2, PointB.getName());
+				prep.setString(3, PointB.getName());
+				prep.setString(4, PointA.getName());
 				prep.setString(5, Month.of(month).toString());					
 			}else{
-				prep = this.base.getCon().prepareStatement("Select MIN(MINTIME) from buspl_statistics where (POINT_A=? or POINT_A=?) and (POINT_B=? or POINT_B=?)");
-				prep.setString(1, PointA);
-				prep.setString(2, PointB);
-				prep.setString(3, PointA);
-				prep.setString(4, PointB);
+				prep = this.base.getCon().prepareStatement("Select STOP_1_5, STOP_5_10, STOP_10, AVGTIME, SQRTTIME, AVGDISTANCE, OCCUR, MINTIME, MIN(MINTIME), MAXTIME from buspl_statistics where (POINT_A=? and POINT_B=?) or (POINT_A=? and POINT_B=?)");
+				prep.setString(1, PointA.getName());
+				prep.setString(2, PointB.getName());
+				prep.setString(3, PointB.getName());
+				prep.setString(4, PointA.getName());
 			}
-			System.out.println(prep);
 			ResultSet rs = prep.executeQuery();
+			LegCollection lg = new LegCollection();
+			lg.setPointA(PointA);
+			lg.setPointB(PointB);
 			while (rs.next()) {
-				return rs.getInt(1);
+				System.out.println("next");
+				HashMap<Duration, Integer> map = new HashMap<Duration,Integer>();
+				map.put(Duration.ofMinutes(1), rs.getInt(1));
+				map.put(Duration.ofMinutes(5), rs.getInt(2));
+				map.put(Duration.ofMinutes(10), rs.getInt(3));
+				lg.setAvgStopsByTime(map);
+				lg.setAvgTravelTime(Duration.ofSeconds(rs.getLong(4)));
+				System.out.println(lg.getAvgTravelTime().getSeconds());
+				lg.setSqrtAvgTravelTime(Duration.ofSeconds(rs.getLong(5)));
+				lg.setAvgDistance(rs.getInt(6));
+				lg.setLogedLegs(new ArrayList<TravelLeg>(rs.getInt(7)));
+				lg.setMinTravelTime(Duration.ofSeconds(rs.getLong(8)));
+				lg.setMaxTravelTime(Duration.ofSeconds(9));
 			}
+			return lg;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return -1;
+		return null;
 	}
-
+	
+	public ResultSet select (String tag, String month, int year, BusLocation pointA, BusLocation pointB){
+		try{
+			PreparedStatement prep;
+			prep = base.getCon().prepareStatement("SELECT * FROM buspl_statistics where TAG=? AND MONTH=? AND YEAR=? AND (POINT_A=? AND POINT_B=?) OR (POINT_B=? AND POINT_A=?);");
+			prep.setString(1, tag);
+			prep.setString(2, month);
+			prep.setInt(3, year);
+			prep.setString(4, pointA.getName());
+			prep.setString(5, pointB.getName());
+			prep.setString(6, pointB.getName());
+			prep.setString(7, pointA.getName());
+			return prep.executeQuery();
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 	public void close(){
 		this.base.closeConnection();
 	}

@@ -19,6 +19,7 @@ public class LegCollection {
 	private Duration maxTravelTime;
 	List<TravelLeg> logedLegs;
 	
+	public LegCollection(){}
 	
 	public LegCollection(TravelLeg tl) {
 		this.pointA = tl.getPointA();

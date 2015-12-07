@@ -8,7 +8,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map.Entry;
+
+import google.GeocodeService;
+import google.GraphHopper;
 
 public class TimePeriod{
 	private LocalDateTime from;
@@ -93,10 +95,9 @@ public class TimePeriod{
 
 		// List of all travel done by all bus
 		List<List<TravelLeg>> trajets = new ArrayList<List<TravelLeg>>();
-
-		
+		System.out.println("PROCESS ------------------");
 		for (String id : busId) {
-
+			System.out.println("bus id ="+busId);
 			ArrayList<TravelLeg> legs = extractLegsByBus(queryWP, id);
 
 
@@ -111,7 +112,7 @@ public class TimePeriod{
 			for (TravelLeg tl : legs) {
 
 				if (lastStop != null
-						&& (Duration.between(lastStop.getEnd(), tl.getStart()).compareTo(Duration.ofMinutes(15)) > 0
+						&& (Duration.between(lastStop.getEnd(), tl.getStart()).compareTo(Duration.ofMinutes(30)) > 0
 								|| lastStop.getPointB().getName().equals(tl.getPointA().getName()))) {
 					trajets.add(currentTrajet);
 					currentTrajet.clear();
@@ -135,6 +136,7 @@ public class TimePeriod{
 				exist = false;
 			}
 		}
+		System.out.println("PROCESS LONG LEGS ------------------");
 		for (int i = 0; i < this.busPoints.size() - 1; i++) {
 			BusLocation start = this.busPoints.get(i);
 			for (int j = i + 1; j < this.busPoints.size(); j++) {
@@ -154,23 +156,10 @@ public class TimePeriod{
 				}
 			}
 		}
+		System.out.println("END PROCESS ------------------");
 		queryWP.close();
-		for (LegCollection lc : this.travelStats)
-			lc.statProcess();
-		
-        FileWriter out;
-		try {
-			out = new FileWriter(new File("MissingLegs.csv"));
-            for(int i=0; i < this.legsMissing.size(); i++) {
-            	out.write(legsMissing.get(i)+"\n");
-            }
-            out.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
 	}
+	
 
 
 	// Methode to get all bus location where bus pass
@@ -215,7 +204,7 @@ public class TimePeriod{
 		BusLocation blStart = null;
 		BusLocation blEnd = null;
 
-		// True if the GPS signal send regularly information in less 1min
+		// True if the GPS signal send regularly information in less than 1min
 		boolean continuSignal = true;
 
 		for (int i = 0; i < wayPoints.size(); i++) {
@@ -229,18 +218,21 @@ public class TimePeriod{
 				if ((blClose = this.closeTo(wp)) != null) {
 					blEnd = blClose;
 					if (blStart != null && !blEnd.getName().equals(blStart.getName())) {
-						HashMap<Duration, Integer> map = new HashMap<Duration, Integer>();
-						map.put(Duration.ofMinutes(1), statStop.get(Duration.ofMinutes(1)));
-						map.put(Duration.ofMinutes(5), statStop.get(Duration.ofMinutes(5)));
-						map.put(Duration.ofMinutes(10), statStop.get(Duration.ofMinutes(10)));
+
 						Duration duration = Duration.between(wayPoints.get(indexStart).getLocalDateTime(),
 								wayPoints.get(i).getLocalDateTime());
-						Duration logic = Duration.ofSeconds(distanceleg).dividedBy(42);
-						if (continuSignal && logic.compareTo(duration) < 0) {
+						
+						if(this.validation(distanceleg, duration, continuSignal, blStart, blEnd)){
+							HashMap<Duration, Integer> map = new HashMap<Duration, Integer>();
+							map.put(Duration.ofMinutes(1), statStop.get(Duration.ofMinutes(1)));
+							map.put(Duration.ofMinutes(5), statStop.get(Duration.ofMinutes(5)));
+							map.put(Duration.ofMinutes(10), statStop.get(Duration.ofMinutes(10)));
 							legs.add(new TravelLeg(blStart, blEnd, wayPoints.get(indexStart).getLocalDateTime(),
 									wayPoints.get(i).getLocalDateTime(), map, distanceleg));
-						} else
-							continuSignal = true;
+						}
+						
+						//Reinitialisation of variables.
+						continuSignal = true;
 						statStop.put(Duration.ofMinutes(1), 0);
 						statStop.put(Duration.ofMinutes(5), 0);
 						statStop.put(Duration.ofMinutes(10), 0);
@@ -290,6 +282,20 @@ public class TimePeriod{
 			}
 		}
 		return legs;
+	}
+	
+	private boolean validation(int distanceleg, Duration duration, boolean continuSignal, BusLocation blStart, BusLocation blEnd){
+		if(continuSignal){
+			if(distanceleg > 1000){
+				if(duration.getSeconds()> 0 && distanceleg/duration.getSeconds() < 34 && distanceleg/duration.getSeconds() > 1.4){
+					int distanceHopper = GraphHopper.getTimeAndDistanceByCoord(blStart.getLat(), blStart.getLng(), blEnd.getLat(), blEnd.getLng())[0];
+					if (distanceleg < (0.4*distanceHopper)+distanceHopper && distanceleg > (0.4*distanceHopper)-distanceHopper){
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	private void extractLegFromTravels(List<List<TravelLeg>> trajets, BusLocation start, BusLocation end) {
@@ -343,7 +349,6 @@ public class TimePeriod{
 			this.travelStats.add(new LegCollection(best));
 		}
 		else{
-			System.out.println("missing");
 			this.legsMissing.add(start.getName()+";"+end.getName());
 		}
 	}
@@ -364,5 +369,63 @@ public class TimePeriod{
 			return closest;
 		}
 		return null;
+	}
+	
+	public static void main(String[] args) {
+		BusLocationsQuery query = new BusLocationsQuery();
+		StatisticsQuery stat = new StatisticsQuery();
+	    FileWriter out = null;
+		Boolean googleCheck = false;
+		try {
+			out = new FileWriter(new File("Diff_Hopper_Min"));
+			ArrayList<String> columnCount = new ArrayList<String>();
+			columnCount.add("PointA");
+			columnCount.add("PointB");
+			columnCount.add("Distance");
+			columnCount.add("MinTime");
+			columnCount.add("Hopper_Distance");
+			columnCount.add("Hopper_Time");
+			if (googleCheck){
+				columnCount.add("Google_Distance");
+				columnCount.add("Google_Time");
+			}
+			for(int i=0; i < columnCount.size(); i++)
+	    		out.write(columnCount.get(i) + ";");
+	    		out.write("\n");
+			}
+    	 catch (IOException e1) {
+ 			// TODO Auto-generated catch block
+ 			e1.printStackTrace();
+ 		}
+		ArrayList<BusLocation> bl = query.getAllBusLocation();
+		try{
+			for (int i=0; i<bl.size(); i++){
+				for(int j=i+1; j<bl.size(); j++){
+					LegCollection lc = stat.selectMin(bl.get(i), bl.get(j), -1, -1);
+					if (lc != null){
+						out.write(lc.getPointA().getName()+";");
+						out.write(lc.getPointB().getName()+";");
+						out.write(lc.getAvgDistance()/1000+";");
+						out.write(lc.getMinTravelTime().getSeconds()/60+";");
+						int[] hopper = GraphHopper.getTimeAndDistanceByCoord(lc.getPointA().getLat(), lc.getPointA().getLng(), lc.getPointB().getLat(), lc.getPointB().getLng());
+						System.out.println("GraphHopper : d="+hopper[0]+" t="+hopper[1]);
+						out.write(hopper[0]/1000+";");
+						out.write(hopper[1]/60000+";");
+						if (googleCheck){
+							int google[] = GeocodeService.getTimeAndDistanceByCoord(lc.getPointA().getLat(), lc.getPointA().getLng(), lc.getPointB().getLat(), lc.getPointB().getLng());
+							out.write(google[0]/1000+";");
+							out.write(google[1]/60+";");
+							System.out.println("GoogleService : d="+google[0]+" t="+google[1]);
+						}
+				    	out.write("\n");
+					}
+				}
+			}
+			out.close();
+		   	System.out.println("end calcul");
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
 	}
 }
