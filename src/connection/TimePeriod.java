@@ -287,7 +287,7 @@ public class TimePeriod{
 	private boolean validation(int distanceleg, Duration duration, boolean continuSignal, BusLocation blStart, BusLocation blEnd){
 		if(continuSignal){
 			if(distanceleg > 1000){
-				if(duration.getSeconds()> 0 && distanceleg/duration.getSeconds() < 34 && distanceleg/duration.getSeconds() > 0.4){
+				if(duration.getSeconds()> 30 && distanceleg/duration.getSeconds() < 34 && distanceleg/duration.getSeconds() > 0.4){
 					GraphHopperQuery query = new GraphHopperQuery();
 					int distanceHopper = query.selectDistance(blStart, blEnd);
 					query.close();
@@ -334,21 +334,25 @@ public class TimePeriod{
 					stopsByTime.put(Duration.ofMinutes(10),
 							stopsByTime.get(Duration.ofMinutes(10)) + tl.getStopsByTime().get(Duration.ofMinutes(10)));
 					if (AtoB && tl.getPointB().getName().equals(end.getName())) {
-						if (best == null
-								|| best.getTravelTime().compareTo(Duration.between(startTime, tl.getEnd())) >= 0)
-							best = new TravelLeg(start, end, startTime, tl.getEnd(), stopsByTime, distance);
+						if(distance > 1000 && Duration.between(startTime, tl.getEnd()).compareTo(Duration.ofMinutes(1))>0 && distance/Duration.between(startTime, tl.getEnd()).getSeconds() < 34){
+							if (best == null
+									|| best.getTravelTime().compareTo(Duration.between(startTime, tl.getEnd())) > 0)
+								best = new TravelLeg(start, end, startTime, tl.getEnd(), stopsByTime, distance);
+						}
 						break;
 					} else if (!AtoB && tl.getPointB().getName().equals(start.getName())) {
-						if (best == null
-								|| best.getTravelTime().compareTo(Duration.between(startTime, tl.getEnd())) >= 0)
-							best = new TravelLeg(end, start, startTime, tl.getEnd(), stopsByTime, distance);
+						if(distance > 1000 && Duration.between(tl.getEnd(), startTime).compareTo(Duration.ofMinutes(1))>0 && distance/Duration.between(tl.getEnd(), startTime).getSeconds() < 34){
+							if (best == null
+									|| best.getTravelTime().compareTo(Duration.between(startTime, tl.getEnd())) > 0)
+								best = new TravelLeg(end, start, startTime, tl.getEnd(), stopsByTime, distance);
+						}
 						break;
 					}
 				}
 			}
 		}
 		if (best != null){
-			System.out.println(best.getPointA()+" "+best.getPointB());
+			System.out.println("best : "+best.getPointA()+" "+best.getPointB());
 			this.travelStats.add(new LegCollection(best));
 		}
 		else{
